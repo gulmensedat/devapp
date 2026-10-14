@@ -1,0 +1,107 @@
+# XcodeGen tanımı: DevApp uygulaması + masaüstü widget eklentisi.
+# Oluşturmak için: ./scripts/xcode.sh   (gerekirse: brew install xcodegen)
+# Not: `swift build` / `swift run` Package.swift ile çalışmaya devam eder (widget hariç).
+name: DevApp
+options:
+  bundleIdPrefix: co.zeynx
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  developmentLanguage: tr
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: "${DEVAPP_TEAM}"
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.5.0"
+    CURRENT_PROJECT_VERSION: "1"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+packages:
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    exactVersion: 1.20.0
+
+targets:
+  DevApp:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/DevApp
+      - path: Support/AppIcon.icns
+        buildPhase: resources
+    dependencies:
+      - package: SwiftTerm
+      - target: DevAppWidget
+        embed: true
+    info:
+      path: Support/Generated/DevApp-Info.plist
+      properties:
+        CFBundleName: DevApp
+        CFBundleDisplayName: DevApp
+        CFBundleDevelopmentRegion: tr
+        CFBundleIconFile: AppIcon
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSApplicationCategoryType: public.app-category.developer-tools
+        NSHighResolutionCapable: true
+        NSPrincipalClass: NSApplication
+        DevAppGroupID: $(TeamIdentifierPrefix)devapp.shared
+        CFBundleURLTypes:
+          - CFBundleURLName: co.zeynx.devapp
+            CFBundleURLSchemes: [devapp]
+    entitlements:
+      path: Support/Generated/DevApp.entitlements
+      properties:
+        # Uygulama sandbox'sız: terminal süreçleri ve ~/.claude, ~/.codex okumak için gerekli
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)devapp.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.zeynx.devapp
+        PRODUCT_NAME: DevApp
+        ENABLE_HARDENED_RUNTIME: NO
+
+  DevAppWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/DevAppWidget
+      - path: Sources/DevApp/Shared
+    dependencies:
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    info:
+      path: Support/Generated/DevAppWidget-Info.plist
+      properties:
+        CFBundleDisplayName: DevApp
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        DevAppGroupID: $(TeamIdentifierPrefix)devapp.shared
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Support/Generated/DevAppWidget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)devapp.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: co.zeynx.devapp.widget
+        PRODUCT_NAME: DevAppWidget
+        SKIP_INSTALL: YES
+
+schemes:
+  DevApp:
+    build:
+      targets:
+        DevApp: all
+        DevAppWidget: all
+    run:
+      config: Debug
+    archive:
+      config: Release

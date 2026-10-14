@@ -1,0 +1,12 @@
+.DS_Store
+.build/
+build/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Xcode projesi XcodeGen ile üretilir
+DevApp.xcodeproj/
+Support/Generated/
+.devapp-team
