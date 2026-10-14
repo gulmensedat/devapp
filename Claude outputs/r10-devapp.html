@@ -1,0 +1,122 @@
+<!-- R10 konusu: DevApp — bu bloğun tamamını HTML editörüne yapıştırın (stiller satır içi) -->
+<div style="max-width:860px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Arial,sans-serif;color:#1d1d1f;line-height:1.6;font-size:15px;">
+
+  <!-- Başlık kartı -->
+  <div style="border-radius:18px;overflow:hidden;background:linear-gradient(135deg,#1B2A5E 0%,#4B2E83 45%,#B4567A 80%,#E08A6B 100%);padding:34px 32px;color:#ffffff;text-align:center;">
+    <img src="https://raw.githubusercontent.com/gulmensedat/devapp/main/Support/AppIcon.png" alt="DevApp" width="96" height="96" style="display:inline-block;width:96px;height:96px;">
+    <div style="font-size:38px;font-weight:800;letter-spacing:-1px;margin-top:6px;">DevApp</div>
+    <div style="font-size:17px;opacity:.9;margin-top:4px;">Projeleri, terminalleri ve Claude / Codex'i tek pencereden yöneten macOS uygulaması</div>
+    <div style="margin-top:16px;">
+      <span style="display:inline-block;margin:3px;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.28);font-size:13px;">Açık kaynak · MIT</span>
+      <span style="display:inline-block;margin:3px;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.28);font-size:13px;">Ücretsiz</span>
+      <span style="display:inline-block;margin:3px;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.28);font-size:13px;">macOS 14+</span>
+      <span style="display:inline-block;margin:3px;padding:5px 12px;border-radius:999px;background:rgba(0,0,0,.28);font-size:13px;">Türkçe / İngilizce</span>
+    </div>
+  </div>
+
+  <!-- Giriş -->
+  <p style="margin:24px 0 10px;">Merhaba arkadaşlar,</p>
+  <p style="margin:0 0 18px;">Projelerimde <b>Claude Code</b> ve <b>Codex</b>'le çalışırken çok fazla terminal kullanıyordum. Hepsini tek yerden yönetebilmek için kendime bir macOS uygulaması geliştirdim; başkalarının da işine yarayabilir diye açık kaynak olarak paylaşıyorum.</p>
+
+  <a href="https://github.com/gulmensedat/devapp" target="_blank" rel="noopener">
+    <img src="https://raw.githubusercontent.com/gulmensedat/devapp/main/docs/images/demo.gif" alt="DevApp tanıtım" style="width:100%;border-radius:14px;display:block;">
+  </a>
+
+  <!-- Özellikler -->
+  <h2 style="font-size:22px;margin:30px 0 12px;color:#4B2E83;">Neler yapıyor?</h2>
+  <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0 10px;">
+    <tr>
+      <td style="width:46px;vertical-align:top;font-size:22px;">⚡</td>
+      <td style="vertical-align:top;"><b>Tek tıkla çalıştır</b><br><span style="color:#55555c;">Proje klasörünü eklediğinizde komutları otomatik buluyor: npm / pnpm / yarn script'leri, Makefile, Docker Compose, Flutter, Django, Rails, Cargo, Go, SwiftPM. Projedeki tüm dev server'lar tek tıkla kalkıyor.</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top;font-size:22px;">🔌</td>
+      <td style="vertical-align:top;"><b>Akıllı portlar</b><br><span style="color:#55555c;">Portları gösteriyor, projeler arası çakışmaları önceden uyarıyor. Port değiştirmek ya da boş port buldurmak tek tık.</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top;font-size:22px;">🧩</td>
+      <td style="vertical-align:top;"><b>Monorepo uyumlu</b><br><span style="color:#55555c;">apps/, packages/, services/ gibi alt projeler kendi komut ve portlarıyla ayrı gruplanıyor.</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top;font-size:22px;">🤖</td>
+      <td style="vertical-align:top;"><b>Claude &amp; Codex yan yana</b><br><span style="color:#55555c;">Birden fazla ajanı aynı anda, istenirse her birini ayrı git worktree'de çalıştırabiliyorsunuz. Bir ajan onay beklediğinde oturum turuncuya dönüyor, Dock'ta sayaç çıkıyor.</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top;font-size:22px;">🖱️</td>
+      <td style="vertical-align:top;"><b>Dock menüsü</b><br><span style="color:#55555c;">Dock simgesine sağ tıklayınca projelere göre tüm açık terminaller, başlat / durdur ve sizi bekleyen oturumlar.</span></td>
+    </tr>
+    <tr>
+      <td style="vertical-align:top;font-size:22px;">📊</td>
+      <td style="vertical-align:top;"><b>Masaüstü widget'ları</b><br><span style="color:#55555c;">Claude ve Codex'in 5 saatlik ve haftalık kullanım limitleri, çalışan projeler ve açık portlar masaüstünde.</span></td>
+    </tr>
+  </table>
+
+  <img src="https://raw.githubusercontent.com/gulmensedat/devapp/main/docs/images/dashboard.png" alt="Pano" style="width:100%;border-radius:14px;display:block;margin:18px 0 12px;">
+  <img src="https://raw.githubusercontent.com/gulmensedat/devapp/main/docs/images/agents.png" alt="Claude ve Codex yan yana" style="width:100%;border-radius:14px;display:block;margin:0 0 12px;">
+  <img src="https://raw.githubusercontent.com/gulmensedat/devapp/main/docs/images/widgets.png" alt="Masaüstü widget'ları" style="width:100%;border-radius:14px;display:block;">
+
+  <!-- Teknik -->
+  <h2 style="font-size:22px;margin:30px 0 12px;color:#4B2E83;">Teknik detaylar</h2>
+  <ul style="margin:0 0 0 20px;padding:0;color:#3a3a40;">
+    <li style="margin-bottom:6px;">Native macOS uygulaması, <b>SwiftUI</b> ile yazıldı (macOS 14 ve üstü)</li>
+    <li style="margin-bottom:6px;">Terminaller gerçek PTY (<b>SwiftTerm</b>): vim, htop, Claude Code ve Codex arayüzleri olduğu gibi çalışıyor</li>
+    <li style="margin-bottom:6px;">Telemetri ya da sunucu yok, her şey kendi Mac'inizde çalışıyor</li>
+    <li>MIT lisanslı ve ücretsiz</li>
+  </ul>
+
+  <!-- Kurulum -->
+  <h2 style="font-size:22px;margin:30px 0 12px;color:#4B2E83;">Kurulum</h2>
+  <p style="margin:0 0 10px;">Repoyu klonlayıp hemen çalıştırabilirsiniz:</p>
+  <div style="background:#0E0F11;color:#E9E9EC;border-radius:12px;padding:16px 18px;font-family:Menlo,Consolas,'DejaVu Sans Mono',monospace;font-size:13.5px;line-height:1.7;overflow-x:auto;">
+    <span style="color:#5BE39A;">$</span> git clone https://github.com/gulmensedat/devapp.git<br>
+    <span style="color:#5BE39A;">$</span> cd devapp<br>
+    <span style="color:#5BE39A;">$</span> swift run
+  </div>
+  <p style="margin:10px 0 0;color:#55555c;font-size:14px;">Masaüstü widget'lı tam sürüm için README'deki Xcode adımlarını takip edebilirsiniz.</p>
+
+  <!-- Bağlantılar -->
+  <div style="margin:30px 0 8px;text-align:center;">
+    <a href="https://github.com/gulmensedat/devapp" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:12px 22px;border-radius:12px;background:#4B2E83;color:#ffffff;text-decoration:none;font-weight:700;">⭐ GitHub'da incele</a>
+    <a href="https://github.com/gulmensedat/devapp/raw/main/docs/video/devapp-promo.mp4" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:12px 22px;border-radius:12px;background:#E08A6B;color:#ffffff;text-decoration:none;font-weight:700;">▶ Tanıtım videosu</a>
+  </div>
+
+  <p style="margin:22px 0 0;text-align:center;color:#3a3a40;">Deneyenlerin geri bildirimlerini, hata bildirimlerini ve önerilerini bekliyorum. Beğendiyseniz repoya bir yıldız bırakırsanız sevinirim 🙂</p>
+
+  <!-- İş birliği -->
+  <div style="margin:34px 0 0;border-radius:18px;background:#0E0F11;color:#E9E9EC;padding:26px 26px 22px;">
+    <div style="font-size:21px;font-weight:800;color:#ffffff;">💼 Projeniz için iş alıyorum</div>
+    <p style="margin:8px 0 16px;color:#B5B7BE;">DevApp gibi uçtan uca ürünler geliştiriyorum. Aşağıdaki alanlarda freelance ya da proje bazlı çalışabiliriz:</p>
+    <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0 8px;color:#E9E9EC;font-size:14.5px;">
+      <tr>
+        <td style="width:34px;vertical-align:top;">📱</td>
+        <td><b>Mobil</b> <span style="color:#9A9DA6;">· Flutter ile iOS ve Android uygulamaları</span></td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top;">🌐</td>
+        <td><b>Web</b> <span style="color:#9A9DA6;">· React, Next.js, TypeScript</span></td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top;">🖥️</td>
+        <td><b>Masaüstü</b> <span style="color:#9A9DA6;">· Swift / SwiftUI ile native macOS uygulamaları</span></td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top;">🎮</td>
+        <td><b>Oyun</b> <span style="color:#9A9DA6;">· mobil ve web oyunları</span></td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top;">✨</td>
+        <td><b>Motion &amp; 3D</b> <span style="color:#9A9DA6;">· animasyon, tanıtım videoları, Three.js</span></td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top;">🗄️</td>
+        <td><b>Backend</b> <span style="color:#9A9DA6;">· Supabase, Firebase</span></td>
+      </tr>
+    </table>
+    <p style="margin:12px 0 18px;color:#B5B7BE;">Projenizi kısaca anlatın; size süre ve yol haritasıyla dönüş yapayım.</p>
+    <div style="text-align:center;">
+      <a href="https://www.linkedin.com/in/sedatgulmen" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:11px 20px;border-radius:12px;background:#0A66C2;color:#ffffff;text-decoration:none;font-weight:700;">LinkedIn'den yazın</a>
+      <a href="https://github.com/gulmensedat" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:11px 20px;border-radius:12px;background:#2A2B30;color:#ffffff;text-decoration:none;font-weight:700;">GitHub profilim</a>
+      <a href="https://www.r10.net/profil/58892-herkulhost.html" target="_blank" rel="noopener" style="display:inline-block;margin:5px;padding:11px 20px;border-radius:12px;background:#4B2E83;color:#ffffff;text-decoration:none;font-weight:700;">R10'dan özel mesaj</a>
+    </div>
+  </div>
+</div>
