@@ -30,7 +30,7 @@ klasörlerinizi bir kez eklersiniz; gerisini tek pencereden başlatır, izler ve
   <img src="docs/images/dashboard.png" alt="Pano: canlı çıktı, komutlar, portlar ve Claude / Codex kullanımıyla proje kartları" width="100%">
 </p>
 
-<sub>Ekran görüntülerinde örnek projeler kullanılmıştır. DevApp Türkçe ve İngilizce kullanılabilir (Ayarlar › Genel).</sub>
+<sub>Ekran görüntülerinde ve videoda örnek projeler kullanılmıştır. DevApp Türkçe ve İngilizce kullanılabilir (Ayarlar › Genel).</sub>
 
 ## Öne çıkanlar
 
@@ -50,6 +50,10 @@ klasörlerinizi bir kez eklersiniz; gerisini tek pencereden başlatır, izler ve
 
 <p align="center">
   <img src="docs/images/project.png" alt="Proje ekranı: alt projelere göre gruplanmış komutlar ve canlı terminal ızgarası" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/images/agents.png" alt="Ajan ekranı: yan yana Claude ve Codex, bekleyen ajan uyarısı" width="100%">
 </p>
 
 <p align="center">

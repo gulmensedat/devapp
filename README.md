@@ -30,7 +30,7 @@ project folders once and run, watch and manage everything from a single window.
   <img src="docs/images/dashboard.png" alt="Dashboard: project cards with live output, commands, ports and Claude / Codex usage" width="100%">
 </p>
 
-<sub>Screenshots use sample projects. DevApp speaks English and Turkish (Settings › General).</sub>
+<sub>Screenshots and video use sample projects. DevApp speaks English and Turkish (Settings › General).</sub>
 
 ## Highlights
 
@@ -50,6 +50,10 @@ project folders once and run, watch and manage everything from a single window.
 
 <p align="center">
   <img src="docs/images/project.png" alt="Project screen: grouped sub-project commands with ports and a grid of live terminals" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/images/agents.png" alt="Agents screen: Claude and Codex side by side, with a waiting alert" width="100%">
 </p>
 
 <p align="center">
