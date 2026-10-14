@@ -7,6 +7,7 @@
   <img alt="Swift 5.10" src="https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white">
   <img alt="SwiftUI" src="https://img.shields.io/badge/UI-SwiftUI-0A84FF">
   <a href="LICENSE"><img alt="MIT Lisansı" src="https://img.shields.io/badge/lisans-MIT-5BE39A"></a>
+  <a href="https://www.linkedin.com/in/sedatgulmen"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-sedatgulmen-0A66C2?logo=linkedin&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -18,6 +19,12 @@
 **DevApp**, aynı anda birden fazla projeyle ve birden fazla yapay zekâ kod ajanıyla çalışanlar için yazılmış native bir
 macOS uygulaması. Her dev server, her `claude` ve her `codex` oturumu için ayrı terminal açmak yerine proje
 klasörlerinizi bir kez eklersiniz; gerisini tek pencereden başlatır, izler ve yönetirsiniz.
+
+<p align="center">
+  <a href="docs/video/devapp-promo.mp4"><img src="docs/images/demo.gif" alt="DevApp tanıtımı: pano, tek tıkla başlatma, yan yana Claude ve Codex, Dock menüsü ve masaüstü widget'ları" width="100%"></a>
+  <br>
+  <sub>▶ <a href="docs/video/devapp-promo.mp4">35 saniyelik videoyu izleyin</a> (sesli)</sub>
+</p>
 
 <p align="center">
   <img src="docs/images/dashboard.png" alt="Pano: canlı çıktı, komutlar, portlar ve Claude / Codex kullanımıyla proje kartları" width="100%">
@@ -35,7 +42,7 @@ klasörlerinizi bir kez eklersiniz; gerisini tek pencereden başlatır, izler ve
 | **Gerçek terminal** | Her oturum gerçek bir PTY ([SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)); `vim`, `htop`, Claude Code ve Codex arayüzleri olduğu gibi çalışır. Izgara ya da odak düzeni, `⌘1…⌘9` ile geçiş. |
 | **Yapay zekâ ajanları için** | Claude ya da Codex'i tek tuşla, isterseniz ilk görevle başlatın. Aynı anda birden fazla ajanı her biri kendi **git worktree**'sinde açın. Ajan zil çaldığında ya da uzun bir iş bittiğinde oturum turuncuya döner, Dock'ta sayaç çıkar. |
 | **Claude ve Codex kullanımı** | 5 saatlik ve haftalık limit yüzdeleri (sıfırlanmaya kalan süreyle), bugünkü token ve 12 saatlik grafik — yerel Claude Code / Codex kayıtlarından. |
-| **Masaüstü widget'ları** | Kullanım widget'ı ve projeler widget'ı. Bir projeye tıklayınca doğrudan o projeye gidersiniz. |
+| **Masaüstü widget'ları** | Kullanım widget'ı ve projeler widget'ı. Oklarla projeler arasında sayfa değiştirin, bir projeye tıklayınca doğrudan ona gidin. |
 | **Dock menüsü** | Dock simgesine sağ tıklayınca projelere göre açık terminaller, projeyi başlat/durdur ve sizi bekleyen oturumlar. |
 | **Ajan bağlantı kontrolü** | Ayarlar › Ajanlar, Claude Code ve Codex'in kurulu olup olmadığını (yol ve sürüm), oturum açık mı ve en son ne zaman kullanıldığını gösterir; tek tıkla kurulum ve giriş. Bağlı olmayan ajan kullanım kartında uyarı olarak görünür. |
 | **Türkçe ve İngilizce** | Dili Ayarlar'dan seçin ya da Mac'in dilini izlesin. Widget'lar ve Dock menüsü de aynı dile geçer. |
@@ -110,6 +117,11 @@ Claude Code ve Codex de bu depoda çalışırken o dosyayı okur.
 
 **Yol haritası:** görev panosu · worktree birleştirme ve diff · Claude / Codex hook'larıyla kesin
 ajan durumu · komut paleti · `.env` yönetimi.
+
+## Geliştirici
+
+**Sedat** tarafından geliştirildi — [LinkedIn](https://www.linkedin.com/in/sedatgulmen) üzerinden ulaşabilirsiniz.
+DevApp işinize yaradıysa repoya ⭐ vermeniz başkalarının da bulmasına yardımcı olur.
 
 ## Lisans
 

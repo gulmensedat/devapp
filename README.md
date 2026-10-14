@@ -7,6 +7,7 @@
   <img alt="Swift 5.10" src="https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white">
   <img alt="SwiftUI" src="https://img.shields.io/badge/UI-SwiftUI-0A84FF">
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-5BE39A"></a>
+  <a href="https://www.linkedin.com/in/sedatgulmen"><img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-sedatgulmen-0A66C2?logo=linkedin&logoColor=white"></a>
 </p>
 
 <p align="center">
@@ -18,6 +19,12 @@
 **DevApp** is a native macOS app for people who juggle several projects and several AI coding agents at once.
 Instead of opening a new terminal tab for every dev server, every `claude` and every `codex` session, you add your
 project folders once and run, watch and manage everything from a single window.
+
+<p align="center">
+  <a href="docs/video/devapp-promo.mp4"><img src="docs/images/demo.gif" alt="DevApp demo: dashboard, one-click start, Claude and Codex side by side, Dock menu and desktop widgets" width="100%"></a>
+  <br>
+  <sub>▶ <a href="docs/video/devapp-promo.mp4">Watch the 35-second video</a> (with sound)</sub>
+</p>
 
 <p align="center">
   <img src="docs/images/dashboard.png" alt="Dashboard: project cards with live output, commands, ports and Claude / Codex usage" width="100%">
@@ -35,7 +42,7 @@ project folders once and run, watch and manage everything from a single window.
 | **Real terminals** | Every session is a real PTY ([SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)), so `vim`, `htop`, Claude Code and Codex TUIs work as usual. Grid or focus layout, `⌘1…⌘9` to jump. |
 | **Built for AI agents** | Start Claude or Codex in a project with one key, optionally with a first prompt. Spawn several agents at once, each in its own **git worktree**. When an agent rings the bell or a long job finishes, the session turns orange and the Dock shows a badge. |
 | **Claude & Codex usage** | 5-hour and weekly limit usage with reset countdowns, today’s tokens and a 12-hour chart — read from local Claude Code / Codex logs. |
-| **Desktop widgets** | A usage widget and a projects widget for the macOS desktop. Click a project to jump straight into it. |
+| **Desktop widgets** | A usage widget and a projects widget for the macOS desktop. Page through projects with the arrows, click one to jump straight into it. |
 | **Dock menu** | Right-click the Dock icon to see every open terminal grouped by project, start or stop projects, or jump to whatever is waiting for you. |
 | **Agent health check** | Settings › Agents shows whether Claude Code and Codex are installed (path and version), signed in and recently used, with one-click install and sign-in. Usage cards warn when an agent isn’t connected. |
 | **English & Turkish** | Switch the language in Settings, or follow your Mac’s language. Widgets and the Dock menu follow along. |
@@ -122,6 +129,11 @@ Issues and pull requests are welcome. Write every UI string as `L("Türkçe", "E
 
 **Roadmap:** task board · worktree merge & diff · precise agent state via Claude / Codex hooks
 · command palette · `.env` management.
+
+## Author
+
+Made by **Sedat** — say hi on [LinkedIn](https://www.linkedin.com/in/sedatgulmen).
+If DevApp saves you a few terminal tabs, a ⭐ on the repo helps others find it.
 
 ## License
 
