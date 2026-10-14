@@ -16,16 +16,16 @@ struct ProjectCommandsSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Komutlar — \(project?.name ?? "")").font(.title2.bold())
-                    Text("İşaretli olanlar \"Projeyi Başlat\" ile birlikte açılır. Port boşsa projeden bulunan kullanılır (gri yazı).")
+                    Text(verbatim: L("Komutlar — ", "Commands — ") + (project?.name ?? "")).font(.title2.bold())
+                    Text(L("İşaretli olanlar \"Projeyi Başlat\" ile birlikte açılır. Port boşsa projeden bulunan kullanılır (gri yazı).", "Checked commands start together with \"Start Project\". If the port is empty, the detected one is used (grey text)."))
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Button { detect() } label: {
-                    Label("Otomatik Bul", systemImage: "wand.and.stars")
+                    Label(L("Otomatik Bul", "Auto-Detect"), systemImage: "wand.and.stars")
                 }
-                .help("package.json, Makefile, docker compose, Procfile vb. dosyalardan komutları bul")
+                .help(L("package.json, Makefile, docker compose, Procfile vb. dosyalardan komutları bul", "Find commands in package.json, Makefile, docker compose, Procfile and more"))
             }
 
             if let detectMessage {
@@ -34,18 +34,18 @@ struct ProjectCommandsSheet: View {
 
             if commands.isEmpty {
                 VStack(spacing: 8) {
-                    Text("Henüz komut yok").foregroundStyle(.secondary)
-                    Text("\"Otomatik Bul\"u deneyin ya da elle ekleyin (ör. npm run dev).")
+                    Text(L("Henüz komut yok", "No commands yet")).foregroundStyle(.secondary)
+                    Text(L("\"Otomatik Bul\"u deneyin ya da elle ekleyin (ör. npm run dev).", "Try \"Auto-Detect\" or add one by hand (e.g. npm run dev)."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 160)
             } else {
                 HStack(spacing: 8) {
-                    Text("Başlat").frame(width: 44)
-                    Text("Ad").frame(width: 150, alignment: .leading)
-                    Text("Komut").frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Alt klasör").frame(width: 110, alignment: .leading)
+                    Text(L("Başlat", "Start")).frame(width: 44)
+                    Text(L("Ad", "Name")).frame(width: 150, alignment: .leading)
+                    Text(L("Komut", "Command")).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(L("Alt klasör", "Subfolder")).frame(width: 110, alignment: .leading)
                     Text("Port").frame(width: 70, alignment: .leading)
                     Spacer().frame(width: 60)
                 }
@@ -60,9 +60,9 @@ struct ProjectCommandsSheet: View {
                                     .labelsHidden()
                                     .toggleStyle(.checkbox)
                                     .frame(width: 44)
-                                TextField("Ad", text: $cmd.name)
+                                TextField(L("Ad", "Name"), text: $cmd.name)
                                     .frame(width: 150)
-                                TextField("Komut", text: $cmd.command)
+                                TextField(L("Komut", "Command"), text: $cmd.command)
                                     .font(.body.monospaced())
                                 TextField("—", text: Binding(
                                     get: { $cmd.wrappedValue.subdirectory ?? "" },
@@ -79,8 +79,8 @@ struct ProjectCommandsSheet: View {
                                     }
                                 ))
                                 .frame(width: 70)
-                                .help(cmd.detectedPort.map { "Bulunan port: \($0). Farklı bir port yazarsanız komut o portla başlatılır." }
-                                      ?? "Port yazarsanız komut PORT=… (ve uygunsa --port) ile başlatılır.")
+                                .help(cmd.detectedPort.map { L("Bulunan port: \($0). Farklı bir port yazarsanız komut o portla başlatılır.", "Detected port: \($0). Enter a different port to start the command on it.") }
+                                      ?? L("Port yazarsanız komut PORT=… (ve uygunsa --port) ile başlatılır.", "If you enter a port, the command starts with PORT=… (and --port where supported)."))
                                 Button { move(cmd.id, by: -1) } label: { Image(systemName: "arrow.up") }
                                     .buttonStyle(.borderless)
                                     .disabled(commands.first?.id == cmd.id)
@@ -99,14 +99,14 @@ struct ProjectCommandsSheet: View {
 
             HStack {
                 Button {
-                    commands.append(RunCommand(name: "yeni komut", command: "", includeInStartAll: false))
+                    commands.append(RunCommand(name: L("yeni komut", "new command"), command: "", includeInStartAll: false))
                 } label: {
-                    Label("Komut Ekle", systemImage: "plus")
+                    Label(L("Komut Ekle", "Add Command"), systemImage: "plus")
                 }
                 Spacer()
-                Button("Vazgeç") { dismiss() }
+                Button(L("Vazgeç", "Cancel")) { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Kaydet") { save() }
+                Button(L("Kaydet", "Save")) { save() }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -130,7 +130,7 @@ struct ProjectCommandsSheet: View {
         let existing = Set(commands.map { "\($0.subdirectory ?? "")|\($0.command)" })
         let new = found.filter { !existing.contains("\($0.subdirectory ?? "")|\($0.command)") }
         commands.append(contentsOf: new)
-        detectMessage = new.isEmpty ? "Yeni komut bulunamadı." : "\(new.count) komut eklendi."
+        detectMessage = new.isEmpty ? L("Yeni komut bulunamadı.", "No new commands found.") : L("\(new.count) komut eklendi.", "Added \(new.count) commands.")
     }
 
     private func move(_ id: UUID, by delta: Int) {

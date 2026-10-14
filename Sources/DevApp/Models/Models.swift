@@ -11,7 +11,7 @@ enum SessionKind: String, Codable, CaseIterable, Identifiable {
         case .shell: return "Terminal"
         case .claude: return "Claude"
         case .codex: return "Codex"
-        case .custom: return "Özel Komut"
+        case .custom: return L("Özel Komut", "Custom Command")
         }
     }
 
@@ -46,13 +46,13 @@ enum SessionStatus: Equatable {
 
     var label: String {
         switch self {
-        case .starting: return "Başlıyor"
-        case .busy: return "Çalışıyor"
-        case .idle: return "Boşta"
-        case .running: return "Çalışıyor"
+        case .starting: return L("Başlıyor", "Starting")
+        case .busy: return L("Çalışıyor", "Running")
+        case .idle: return L("Boşta", "Idle")
+        case .running: return L("Çalışıyor", "Running")
         case .exited(let code):
-            if let code { return "Kapandı (\(code))" }
-            return "Kapandı"
+            if let code { return L("Kapandı (\(code))", "Exited (\(code))") }
+            return L("Kapandı", "Exited")
         }
     }
 
@@ -132,6 +132,10 @@ struct Project: Codable, Identifiable, Hashable {
     var commands: [RunCommand] = []
     /// Kullanıcının seçtiği renk (Theme.projectPalette sırası); nil = isimden otomatik
     var colorIndex: Int?
+    /// Kullanıcının seçtiği logo dosyası; nil = projeden otomatik bul
+    var iconPath: String?
+    /// true = logo gösterme, harf ikonu kullan
+    var iconDisabled: Bool?
 
     init(id: UUID = UUID(), name: String, path: String, commands: [RunCommand] = [], colorIndex: Int? = nil) {
         self.id = id
@@ -149,6 +153,8 @@ struct Project: Codable, Identifiable, Hashable {
         path = try c.decode(String.self, forKey: .path)
         commands = try c.decodeIfPresent([RunCommand].self, forKey: .commands) ?? []
         colorIndex = try c.decodeIfPresent(Int.self, forKey: .colorIndex)
+        iconPath = try c.decodeIfPresent(String.self, forKey: .iconPath)
+        iconDisabled = try c.decodeIfPresent(Bool.self, forKey: .iconDisabled)
     }
 
     var startAllCommands: [RunCommand] { commands.filter(\.includeInStartAll) }
@@ -180,10 +186,10 @@ enum DashboardFilter: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var label: String {
         switch self {
-        case .all: return "Tümü"
-        case .running: return "Çalışanlar"
-        case .attention: return "Dikkat bekleyen"
-        case .stopped: return "Durmuş"
+        case .all: return L("Tümü", "All")
+        case .running: return L("Çalışanlar", "Running")
+        case .attention: return L("Dikkat bekleyen", "Needs attention")
+        case .stopped: return L("Durmuş", "Stopped")
         }
     }
 }

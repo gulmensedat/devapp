@@ -14,7 +14,7 @@ final class DockMenu: NSObject {
         // Dikkat bekleyenler en üstte
         let waiting = store.sessions.filter(\.needsAttention)
         if !waiting.isEmpty {
-            let header = NSMenuItem(title: "Sizi bekleyen (\(waiting.count))", action: nil, keyEquivalent: "")
+            let header = NSMenuItem(title: L("Sizi bekleyen (\(waiting.count))", "Waiting for you (\(waiting.count))"), action: nil, keyEquivalent: "")
             header.isEnabled = false
             menu.addItem(header)
             for s in waiting {
@@ -43,7 +43,7 @@ final class DockMenu: NSObject {
             }
         }
         if !any {
-            let empty = NSMenuItem(title: "Açık terminal yok", action: nil, keyEquivalent: "")
+            let empty = NSMenuItem(title: L("Açık terminal yok", "No open terminals"), action: nil, keyEquivalent: "")
             empty.isEnabled = false
             menu.addItem(empty)
         }
@@ -52,7 +52,7 @@ final class DockMenu: NSObject {
         let idle = store.projects.filter { !$0.commands.isEmpty && store.runningCommandCount($0) == 0 }
         if !idle.isEmpty {
             menu.addItem(.separator())
-            let start = NSMenuItem(title: "Projeyi Başlat", action: nil, keyEquivalent: "")
+            let start = NSMenuItem(title: L("Projeyi Başlat", "Start Project"), action: nil, keyEquivalent: "")
             let sub = NSMenu()
             for p in idle {
                 let item = NSMenuItem(title: p.name, action: #selector(startProject(_:)), keyEquivalent: "")
@@ -66,8 +66,8 @@ final class DockMenu: NSObject {
         }
 
         menu.addItem(.separator())
-        menu.addItem(actionItem("Pano", #selector(openDashboard)))
-        menu.addItem(actionItem("Tüm Terminaller", #selector(openTerminals)))
+        menu.addItem(actionItem(L("Pano", "Dashboard"), #selector(openDashboard)))
+        menu.addItem(actionItem(L("Tüm Terminaller", "All Terminals"), #selector(openTerminals)))
         return menu
     }
 
@@ -79,7 +79,7 @@ final class DockMenu: NSObject {
         if let cid = s.commandID, let port = store.command(cid)?.1.effectivePort, s.isRunning {
             title += "   :\(port)"
         }
-        if case .exited = s.status { title += "  (kapandı)" }
+        if case .exited = s.status { title += L("  (kapandı)", "  (exited)") }
 
         let item = NSMenuItem(title: title, action: #selector(openSession(_:)), keyEquivalent: "")
         item.target = self
@@ -104,14 +104,14 @@ final class DockMenu: NSObject {
     private func projectSubmenu(_ p: Project, store: AppStore) -> NSMenu {
         let sub = NSMenu()
         sub.autoenablesItems = false
-        let open = NSMenuItem(title: "Projeyi Aç", action: #selector(openProject(_:)), keyEquivalent: "")
+        let open = NSMenuItem(title: L("Projeyi Aç", "Open Project"), action: #selector(openProject(_:)), keyEquivalent: "")
         open.target = self
         open.representedObject = p.id
         sub.addItem(open)
 
         if !p.commands.isEmpty {
             let running = store.runningCommandCount(p) > 0
-            let toggle = NSMenuItem(title: running ? "Durdur" : "Başlat",
+            let toggle = NSMenuItem(title: running ? L("Durdur", "Stop") : L("Başlat", "Start"),
                                     action: running ? #selector(stopProject(_:)) : #selector(startProject(_:)),
                                     keyEquivalent: "")
             toggle.target = self
@@ -119,12 +119,12 @@ final class DockMenu: NSObject {
             sub.addItem(toggle)
         }
 
-        let xcode = NSMenuItem(title: "Xcode'da Aç", action: #selector(openXcode(_:)), keyEquivalent: "")
+        let xcode = NSMenuItem(title: L("Xcode'da Aç", "Open in Xcode"), action: #selector(openXcode(_:)), keyEquivalent: "")
         xcode.target = self
         xcode.representedObject = p.id
         sub.addItem(xcode)
 
-        let claude = NSMenuItem(title: "Yeni Claude", action: #selector(newClaude(_:)), keyEquivalent: "")
+        let claude = NSMenuItem(title: L("Yeni Claude", "New Claude"), action: #selector(newClaude(_:)), keyEquivalent: "")
         claude.target = self
         claude.representedObject = p.id
         sub.addItem(claude)
@@ -139,6 +139,17 @@ final class DockMenu: NSObject {
 
     /// Projenin renginde küçük yuvarlak kare
     private func projectImage(_ p: Project) -> NSImage {
+        if let icon = AppStore.shared.projectIcons[p.id] {
+            let small = NSImage(size: NSSize(width: 16, height: 16), flipped: false) { rect in
+                icon.draw(in: rect)
+                return true
+            }
+            return small
+        }
+        return colorSquare(p)
+    }
+
+    private func colorSquare(_ p: Project) -> NSImage {
         let size = NSSize(width: 12, height: 12)
         let hex = p.accentHex
         let image = NSImage(size: size, flipped: false) { rect in

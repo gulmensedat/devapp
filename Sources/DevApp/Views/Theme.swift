@@ -78,12 +78,28 @@ struct ProjectAvatar: View {
     var dimmed = false
 
     var body: some View {
-        Text(verbatim: project.initials)
-            .font(.system(size: size * 0.36, weight: .bold))
-            .foregroundStyle(Theme.ink)
-            .frame(width: size, height: size)
-            .background(RoundedRectangle(cornerRadius: size * 0.28, style: .continuous).fill(project.accent))
-            .opacity(dimmed ? 0.55 : 1)
+        let shape = RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+        Group {
+            if let image = AppStore.shared.projectIcons[project.id] {
+                // Projenin kendi logosu / uygulama ikonu
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .padding(size * 0.06)
+                    .frame(width: size, height: size)
+                    .background(shape.fill(Color(hex: 0x1C1D21)))
+                    .clipShape(shape)
+                    .overlay(shape.strokeBorder(project.accent.opacity(0.35), lineWidth: 1))
+            } else {
+                Text(verbatim: project.initials)
+                    .font(.system(size: size * 0.36, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(width: size, height: size)
+                    .background(shape.fill(project.accent))
+            }
+        }
+        .opacity(dimmed ? 0.55 : 1)
     }
 }
 
@@ -131,8 +147,8 @@ struct PlayStopButton: View {
         .buttonStyle(.plain)
         .fixedSize()
         .onHover { hovering = $0 }
-        .help(running ? "Durdur" : "Çalıştır")
-        .accessibilityLabel(running ? "Durdur" : "Çalıştır")
+        .help(running ? L("Durdur", "Stop") : L("Çalıştır", "Run"))
+        .accessibilityLabel(running ? L("Durdur", "Stop") : L("Çalıştır", "Run"))
     }
 }
 
@@ -166,7 +182,7 @@ struct PrimaryRunButton: View {
                 Image(systemName: running ? "stop.fill" : "play.fill")
                     .font(.system(size: 11, weight: .bold))
                     .frame(width: 12)
-                Text(running ? "Durdur" : "Başlat")
+                Text(running ? L("Durdur", "Stop") : L("Başlat", "Start"))
                     .font(.system(size: 13, weight: .semibold))
                     .lineLimit(1)
             }

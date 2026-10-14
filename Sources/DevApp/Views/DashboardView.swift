@@ -49,7 +49,7 @@ struct DashboardView: View {
 
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Projeler")
+            Text(L("Projeler", "Projects"))
                 .font(.system(size: 28, weight: .bold))
                 .foregroundStyle(Theme.textStrong)
             Text(verbatim: summary)
@@ -65,7 +65,7 @@ struct DashboardView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Theme.tertiary)
-            TextField("Proje, komut ya da port ara…", text: searchText)
+            TextField(L("Proje, komut ya da port ara…", "Search projects, commands or ports…"), text: searchText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.text)
@@ -92,7 +92,7 @@ struct DashboardView: View {
         Button { store.addProjectsViaPanel() } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus").font(.system(size: 13, weight: .bold))
-                Text("Proje Ekle").font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                Text(L("Proje Ekle", "Add Project")).font(.system(size: 13, weight: .semibold)).lineLimit(1)
             }
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 16)
@@ -106,10 +106,10 @@ struct DashboardView: View {
     private var summary: String {
         let running = store.projects.reduce(0) { $0 + store.runningCommandCount($1) }
         let agents = store.sessions.filter { $0.kind.isAgent && $0.isRunning }.count
-        var parts = ["\(store.projects.count) proje"]
-        if running > 0 { parts.append("\(running) komut çalışıyor") }
-        if agents > 0 { parts.append("\(agents) ajan") }
-        if store.attentionCount > 0 { parts.append("\(store.attentionCount) dikkat bekliyor") }
+        var parts = [L("\(store.projects.count) proje", "\(store.projects.count) projects")]
+        if running > 0 { parts.append(L("\(running) komut çalışıyor", "\(running) commands running")) }
+        if agents > 0 { parts.append(L("\(agents) ajan", "\(agents) agents")) }
+        if store.attentionCount > 0 { parts.append(L("\(store.attentionCount) dikkat bekliyor", "\(store.attentionCount) need attention")) }
         return parts.joined(separator: " · ")
     }
 
@@ -210,11 +210,11 @@ struct ProjectCard: View {
                 HStack(spacing: 10) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 13, weight: .semibold))
-                    Text(verbatim: "\(crash.command.name) hatayla kapandı (çıkış \(crash.code))")
+                    Text(verbatim: L("\(crash.command.name) hatayla kapandı (çıkış \(crash.code))", "\(crash.command.name) exited with an error (code \(crash.code))"))
                         .font(.system(size: 12.5))
                         .lineLimit(1)
                     Spacer(minLength: 4)
-                    Button("Yeniden başlat") { store.run(crash.command, in: project, focusIt: false) }
+                    Button(L("Yeniden başlat", "Restart")) { store.run(crash.command, in: project, focusIt: false) }
                         .buttonStyle(.plain)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: 0x1A0E0A))
@@ -256,10 +256,10 @@ struct ProjectCard: View {
     @ViewBuilder
     private func pill(for state: AppStore.ProjectState) -> some View {
         switch state {
-        case .attention: StatusPill(text: "Dikkat", fg: Theme.orange, bg: Theme.orangeBg)
-        case .running: StatusPill(text: "Çalışıyor", fg: Theme.green, bg: Theme.greenBg)
-        case .crashed: StatusPill(text: "Hata", fg: Theme.red, bg: Theme.redBg)
-        case .idle: StatusPill(text: "Durdu", fg: Color(hex: 0xA7AAB2), bg: Color(hex: 0x202126))
+        case .attention: StatusPill(text: L("Dikkat", "Attention"), fg: Theme.orange, bg: Theme.orangeBg)
+        case .running: StatusPill(text: L("Çalışıyor", "Running"), fg: Theme.green, bg: Theme.greenBg)
+        case .crashed: StatusPill(text: L("Hata", "Error"), fg: Theme.red, bg: Theme.redBg)
+        case .idle: StatusPill(text: L("Durdu", "Stopped"), fg: Color(hex: 0xA7AAB2), bg: Color(hex: 0x202126))
         }
     }
 
@@ -269,8 +269,8 @@ struct ProjectCard: View {
         let lines = session?.previewLines ?? []
         return VStack(alignment: .leading, spacing: 3) {
             if lines.isEmpty {
-                Text(project.commands.isEmpty ? "Henüz çıktı yok · komut eklemek için kartı açın"
-                                              : "Henüz çıktı yok · ▶ ile bir komut başlatın")
+                Text(project.commands.isEmpty ? L("Henüz çıktı yok · komut eklemek için kartı açın", "No output yet · open the card to add commands")
+                                              : L("Henüz çıktı yok · ▶ ile bir komut başlatın", "No output yet · start a command with ▶"))
                     .foregroundStyle(Theme.tertiary)
             } else {
                 ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
@@ -300,7 +300,7 @@ struct ProjectCard: View {
             }
             if project.commands.count > shown.count {
                 Button { store.openProject(project) } label: {
-                    Text(verbatim: "+\(project.commands.count - shown.count) komut daha")
+                    Text(verbatim: L("+\(project.commands.count - shown.count) komut daha", "+\(project.commands.count - shown.count) more commands"))
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -310,7 +310,7 @@ struct ProjectCard: View {
             }
             if project.commands.isEmpty {
                 Button { store.editCommands(project) } label: {
-                    Label("Komut ekle", systemImage: "plus")
+                    Label(L("Komut ekle", "Add command"), systemImage: "plus")
                         .font(.system(size: 12.5, weight: .medium))
                         .foregroundStyle(Theme.secondary)
                         .frame(maxWidth: .infinity, minHeight: 36)
@@ -333,7 +333,7 @@ struct ProjectCard: View {
                     .font(.system(size: 12))
                     .foregroundStyle(Color(hex: 0xA7AAB2))
                 }
-                Label { Text(verbatim: agents > 0 ? "\(agents) ajan" : "ajan yok").lineLimit(1) } icon: {
+                Label { Text(verbatim: agents > 0 ? L("\(agents) ajan", "\(agents) agents") : L("ajan yok", "no agents")).lineLimit(1) } icon: {
                     Image(systemName: "sparkles")
                 }
                 .font(.system(size: 12))
@@ -348,14 +348,14 @@ struct ProjectCard: View {
                 }
                 .buttonStyle(GhostButtonStyle(height: 36))
                 .fixedSize()
-                .help("Xcode'da aç")
+                .help(L("Xcode'da aç", "Open in Xcode"))
 
                 Button { store.quickNew(.claude, projectID: project.id) } label: {
                     Image(systemName: "sparkles").font(.system(size: 14))
                 }
                 .buttonStyle(GhostButtonStyle(height: 36))
                 .fixedSize()
-                .help("Bu projede Claude başlat")
+                .help(L("Bu projede Claude başlat", "Start Claude in this project"))
 
                 Spacer(minLength: 8)
 
@@ -412,10 +412,10 @@ struct AddProjectCard: View {
                     .foregroundStyle(Color(hex: 0xAEB6FF))
                     .frame(width: 52, height: 52)
                     .background(RoundedRectangle(cornerRadius: 16).fill(Color(hex: 0x1A1B1F)))
-                Text("Proje klasörü ekle")
+                Text(L("Proje klasörü ekle", "Add project folder"))
                     .font(.system(size: 14))
                     .foregroundStyle(Color(hex: 0x8B8E96))
-                Text("ya da klasörü buraya sürükleyin")
+                Text(L("ya da klasörü buraya sürükleyin", "or drop a folder here"))
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.tertiary)
             }
@@ -440,21 +440,21 @@ struct StatusFooter: View {
         HStack(spacing: 18) {
             HStack(spacing: 8) {
                 Circle().fill(running > 0 ? Color(hex: 0x3DDC84) : Theme.tertiary).frame(width: 7, height: 7)
-                Text(verbatim: running > 0 ? "\(running) komut çalışıyor" : "Çalışan komut yok")
+                Text(verbatim: running > 0 ? L("\(running) komut çalışıyor", "\(running) commands running") : L("Çalışan komut yok", "No commands running"))
             }
             if store.attentionCount > 0 {
                 Button { store.focusNextAttention() } label: {
                     HStack(spacing: 8) {
                         Circle().fill(Theme.orange).frame(width: 7, height: 7)
-                        Text(verbatim: "\(store.attentionCount) oturum sizi bekliyor")
+                        Text(verbatim: L("\(store.attentionCount) oturum sizi bekliyor", "\(store.attentionCount) sessions waiting for you"))
                     }
                 }
                 .buttonStyle(.plain)
-                .help("Dikkat bekleyene git (⌘J)")
+                .help(L("Dikkat bekleyene git (⌘J)", "Go to waiting session (⌘J)"))
             }
             Spacer()
             if !ports.isEmpty {
-                Text("Açık portlar").font(Theme.mono(12))
+                Text(L("Açık portlar", "Open ports")).font(Theme.mono(12))
                 ForEach(ports, id: \.self) { port in
                     Button { store.openURL("http://localhost:\(port)") } label: {
                         Text(verbatim: ":\(port)")

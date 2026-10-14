@@ -30,8 +30,8 @@ struct PortChip: View {
             }
             .buttonStyle(.plain)
             .fixedSize()
-            .help(conflict ? "Bu port başka bir komutla çakışıyor — değiştirmek için tıklayın"
-                           : (open ? "localhost:\(port) açık — tarayıcıda aç ya da portu değiştir" : "Portu değiştir"))
+            .help(conflict ? L("Bu port başka bir komutla çakışıyor — değiştirmek için tıklayın", "This port conflicts with another command — click to change it")
+                           : (open ? L("localhost:\(port) açık — tarayıcıda aç ya da portu değiştir", "localhost:\(port) is open — open it in the browser or change the port") : L("Portu değiştir", "Change port")))
             .popover(isPresented: $showEditor, arrowEdge: .bottom) {
                 PortEditor(project: project, command: command) { showEditor = false }
                     .environment(store)
@@ -73,24 +73,24 @@ struct PortEditor: View {
                     store.openURL(s.flatMap { store.liveURL(for: $0) } ?? "http://localhost:\(current)")
                     onDone()
                 } label: {
-                    Label { Text(verbatim: "localhost:\(current) aç") } icon: { Image(systemName: "safari") }
+                    Label { Text(verbatim: L("localhost:\(current) aç", "Open localhost:\(current)")) } icon: { Image(systemName: "safari") }
                 }
             }
 
             HStack(spacing: 8) {
-                TextField("örn. 8779", text: $text)
+                TextField(L("örn. 8779", "e.g. 8779"), text: $text)
                     .textFieldStyle(.roundedBorder)
                     .font(Theme.mono(13))
                     .frame(width: 100)
                     .onSubmit { save() }
-                Button("Boş port bul") {
+                Button(L("Boş port bul", "Find a free port")) {
                     text = String(store.suggestFreePort(after: value ?? current ?? 3000, excluding: command.id))
                 }
             }
 
             if !others.isEmpty {
                 Label {
-                    Text(verbatim: "Çakışıyor: " + others.map { "\($0.0.name) › \($0.1.name)" }.joined(separator: ", "))
+                    Text(verbatim: L("Çakışıyor: ", "Conflicts with: ") + others.map { "\($0.0.name) › \($0.1.name)" }.joined(separator: ", "))
                 } icon: {
                     Image(systemName: "exclamationmark.triangle.fill")
                 }
@@ -98,7 +98,7 @@ struct PortEditor: View {
                 .foregroundStyle(.orange)
                 .fixedSize(horizontal: false, vertical: true)
             } else if let v = value, v != current, PortMonitor.isListening(v) {
-                Label("Bu port şu an başka bir süreç tarafından kullanılıyor", systemImage: "exclamationmark.triangle")
+                Label(L("Bu port şu an başka bir süreç tarafından kullanılıyor", "This port is currently used by another process"), systemImage: "exclamationmark.triangle")
                     .font(.system(size: 11.5))
                     .foregroundStyle(.orange)
             }
@@ -108,7 +108,7 @@ struct PortEditor: View {
                     store.setPort(nil, for: command.id)
                     onDone()
                 } label: {
-                    Text(verbatim: "Projedeki porta dön (:\(detected))")
+                    Text(verbatim: L("Projedeki porta dön (:\(detected))", "Back to the project’s port (:\(detected))"))
                 }
                 .buttonStyle(.link)
             }
@@ -120,9 +120,9 @@ struct PortEditor: View {
 
             HStack {
                 Spacer()
-                Button("Vazgeç") { onDone() }
+                Button(L("Vazgeç", "Cancel")) { onDone() }
                     .keyboardShortcut(.cancelAction)
-                Button(running ? "Kaydet ve Yeniden Başlat" : "Kaydet") { save() }
+                Button(running ? L("Kaydet ve Yeniden Başlat", "Save and Restart") : L("Kaydet", "Save")) { save() }
                     .keyboardShortcut(.defaultAction)
                     .disabled(value == nil || value == current)
             }
@@ -135,10 +135,10 @@ struct PortEditor: View {
     private func note(running: Bool) -> String {
         let c = command.command.lowercased()
         if c.hasPrefix("docker compose") || c.hasPrefix("docker-compose") {
-            return "Docker compose portu compose dosyasından alır; buradaki değer yalnızca izleme ve tarayıcıda açma içindir."
+            return L("Docker compose portu compose dosyasından alır; buradaki değer yalnızca izleme ve tarayıcıda açma içindir.", "Docker Compose takes the port from the compose file; this value is only used for monitoring and opening in the browser.")
         }
-        var s = "Komut PORT=… ortam değişkeniyle (Vite, Next, Django, Rails, Flutter, Angular, Expo için ayrıca --port ile) başlatılır."
-        if running { s += " Kaydedince komut yeni portla yeniden başlar." }
+        var s = L("Komut PORT=… ortam değişkeniyle (Vite, Next, Django, Rails, Flutter, Angular, Expo için ayrıca --port ile) başlatılır.", "The command starts with the PORT=… environment variable (plus --port for Vite, Next, Django, Rails, Flutter, Angular and Expo).")
+        if running { s += L(" Kaydedince komut yeni portla yeniden başlar.", " Saving restarts the command on the new port.") }
         return s
     }
 

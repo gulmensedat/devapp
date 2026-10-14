@@ -8,7 +8,7 @@ struct ProjectScreen: View {
     var body: some View {
         VStack(spacing: 0) {
             ProjectHero(project: project)
-            TerminalArea(title: "Terminaller")
+            TerminalArea(title: L("Terminaller", "Terminals"))
         }
         .background(Theme.bg)
     }
@@ -55,12 +55,12 @@ struct ProjectHero: View {
                             .foregroundStyle(Theme.textStrong)
                             .lineLimit(1)
                         switch state {
-                        case .attention: StatusPill(text: "Dikkat bekliyor", fg: Theme.orange, bg: Theme.orangeBg)
+                        case .attention: StatusPill(text: L("Dikkat bekliyor", "Needs attention"), fg: Theme.orange, bg: Theme.orangeBg)
                         case .running:
-                            StatusPill(text: running > 0 ? "\(running) komut çalışıyor" : "Ajan çalışıyor",
+                            StatusPill(text: running > 0 ? L("\(running) komut çalışıyor", "\(running) commands running") : L("Ajan çalışıyor", "Agent running"),
                                        fg: Theme.green, bg: Theme.greenBg)
-                        case .crashed: StatusPill(text: "Hata", fg: Theme.red, bg: Theme.redBg)
-                        case .idle: StatusPill(text: "Durdu", fg: Color(hex: 0xA7AAB2), bg: Color(hex: 0x202126))
+                        case .crashed: StatusPill(text: L("Hata", "Error"), fg: Theme.red, bg: Theme.redBg)
+                        case .idle: StatusPill(text: L("Durdu", "Stopped"), fg: Color(hex: 0xA7AAB2), bg: Color(hex: 0x202126))
                         }
                     }
                     HStack(spacing: 14) {
@@ -97,11 +97,11 @@ struct ProjectHero: View {
                         Label("Terminal", systemImage: SessionKind.shell.symbol)
                     }
                     Divider()
-                    Button("Gelişmiş… (worktree, çoklu ajan, görev)") {
+                    Button(L("Gelişmiş… (worktree, çoklu ajan, görev)", "Advanced… (worktree, multiple agents, task)")) {
                         store.requestNewSession(kind: .claude, projectID: project.id)
                     }
                 } label: {
-                    Label("Yeni", systemImage: "plus")
+                    Label(L("Yeni", "New"), systemImage: "plus")
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
@@ -109,20 +109,20 @@ struct ProjectHero: View {
                 .frame(height: 40)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.raised))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color(hex: 0x2A2B30)))
-                .help("Claude, Codex ya da terminal aç")
+                .help(L("Claude, Codex ya da terminal aç", "Open Claude, Codex or a terminal"))
 
                 Button { store.openInXcode(path: project.path) } label: {
                     Label("Xcode", systemImage: "hammer")
                 }
                 .buttonStyle(GhostButtonStyle(height: 40))
-                .help("Xcode'da aç (⇧⌘X)")
+                .help(L("Xcode'da aç (⇧⌘X)", "Open in Xcode (⇧⌘X)"))
 
                 Menu {
                     Button { store.revealInFinder(path: project.path) } label: {
-                        Label("Finder'da Göster", systemImage: "folder")
+                        Label(L("Finder'da Göster", "Show in Finder"), systemImage: "folder")
                     }
                     Button { store.openInExternalTerminal(path: project.path) } label: {
-                        Label("\(Launcher.preferredTerminal.name)'de Aç", systemImage: "terminal")
+                        Label(L("\(Launcher.preferredTerminal.name)'de Aç", "Open in \(Launcher.preferredTerminal.name)"), systemImage: "terminal")
                     }
                     Divider()
                     ForEach(Launcher.installedEditors.filter { $0.id != Launcher.xcode.id }) { app in
@@ -131,7 +131,7 @@ struct ProjectHero: View {
                         }
                     }
                     Divider()
-                    Button("Yolu Kopyala") { Launcher.copyPath(project.path) }
+                    Button(L("Yolu Kopyala", "Copy Path")) { Launcher.copyPath(project.path) }
                 } label: {
                     Image(systemName: "arrow.up.forward.app")
                 }
@@ -141,13 +141,13 @@ struct ProjectHero: View {
                 .frame(width: 40, height: 40)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.raised))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color(hex: 0x2A2B30)))
-                .help("Başka uygulamada aç")
+                .help(L("Başka uygulamada aç", "Open in another app"))
 
                 if !project.commands.isEmpty {
                     PrimaryRunButton(running: running > 0, color: project.accent, height: 44) {
                         if running > 0 { store.stopProject(project) } else { store.startProject(project) }
                     }
-                    .help(running > 0 ? "Çalışan komutları durdur (⌥⌘.)" : "İşaretli komutları başlat (⌥⌘R)")
+                    .help(running > 0 ? L("Çalışan komutları durdur (⌥⌘.)", "Stop running commands (⌥⌘.)") : L("İşaretli komutları başlat (⌥⌘R)", "Start checked commands (⌥⌘R)"))
                 }
         }
         .fixedSize()
@@ -224,9 +224,9 @@ struct CommandButtons: View {
             if conflicts > 0 {
                 HStack(spacing: 10) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                    Text(verbatim: "\(conflicts) komut aynı portu kullanıyor; birlikte çalışırsa biri açılamaz.")
+                    Text(verbatim: L("\(conflicts) komut aynı portu kullanıyor; birlikte çalışırsa biri açılamaz.", "\(conflicts) commands share a port; if they run together, one will fail."))
                         .font(.system(size: 12.5))
-                    Button("Boş portlara taşı") { store.resolvePortConflicts(in: project) }
+                    Button(L("Boş portlara taşı", "Move to free ports")) { store.resolvePortConflicts(in: project) }
                         .buttonStyle(.plain)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: 0x1A1206))
@@ -249,7 +249,7 @@ struct CommandButtons: View {
             Image(systemName: g.title == nil ? "folder" : "folder.fill")
                 .font(.system(size: 11))
                 .foregroundStyle(project.accent)
-            Text(verbatim: g.title.map { "\($0)/" } ?? "kök")
+            Text(verbatim: g.title.map { "\($0)/" } ?? L("kök", "root"))
                 .font(Theme.mono(12, weight: .semibold))
                 .foregroundStyle(Color(hex: 0xC9CBD1))
             if !ports.isEmpty {
@@ -265,7 +265,7 @@ struct CommandButtons: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Theme.tertiary)
-                .help("Bu alt projeyi Xcode'da aç")
+                .help(L("Bu alt projeyi Xcode'da aç", "Open this sub-project in Xcode"))
                 Button {
                     store.openInExternalTerminal(path: URL(fileURLWithPath: project.path).appendingPathComponent(sub).path)
                 } label: {
@@ -273,7 +273,7 @@ struct CommandButtons: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Theme.tertiary)
-                .help("Bu alt klasörde harici terminal aç")
+                .help(L("Bu alt klasörde harici terminal aç", "Open an external terminal in this subfolder"))
             }
         }
     }
@@ -283,7 +283,7 @@ struct CommandButtons: View {
             HStack(spacing: 8) {
                 Image(systemName: project.commands.isEmpty ? "plus" : "slider.horizontal.3")
                     .font(.system(size: 12, weight: .semibold))
-                Text(project.commands.isEmpty ? "Komut ekle" : "Düzenle")
+                Text(project.commands.isEmpty ? L("Komut ekle", "Add command") : L("Düzenle", "Edit"))
                     .font(.system(size: 13))
             }
             .foregroundStyle(Theme.secondary)
@@ -295,7 +295,7 @@ struct CommandButtons: View {
         }
         .buttonStyle(.plain)
         .fixedSize()
-        .help("Komutları düzenle (⌥⌘E)")
+        .help(L("Komutları düzenle (⌥⌘E)", "Edit commands (⌥⌘E)"))
     }
 }
 
@@ -333,7 +333,7 @@ struct CommandButton: View {
                 .frame(maxWidth: 240, alignment: .leading)
             }
             .buttonStyle(.plain)
-            .help(running ? "Terminaline git" : "Çalıştır: \(command.command)")
+            .help(running ? L("Terminaline git", "Go to its terminal") : L("Çalıştır: \(command.command)", "Run: \(command.command)"))
 
             PortChip(project: project, command: command)
 

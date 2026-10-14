@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import WidgetKit
+import UniformTypeIdentifiers
 
 /// Uygulamanın tek durum kaynağı: projeler, terminal oturumları, yerleşim, odak.
 @MainActor
@@ -28,9 +29,16 @@ final class AppStore {
     var dashboardFilter: DashboardFilter = .all
     var searchText = ""
     var projectBranches: [UUID: String] = [:]
+    /// Projelerin logoları (projeden otomatik bulunan ya da kullanıcının seçtiği)
+    var projectIcons: [UUID: NSImage] = [:]
+    @ObservationIgnored private var iconSources: [UUID: String] = [:]
+    @ObservationIgnored private var widgetIconsWritten: [UUID: String] = [:]
     /// Claude / Codex kullanım özeti (dakikada bir tazelenir)
     var claudeUsage: ProviderUsage?
     var codexUsage: ProviderUsage?
+    /// Claude Code / Codex kurulum ve oturum durumu (Ayarlar › Ajanlar)
+    var agentHealth: [AgentKind: AgentHealth] = [:]
+    @ObservationIgnored private var agentCheckRunning = false
     @ObservationIgnored private var lastPublished: WidgetSnapshot?
     /// Widget verisi yazma durumu (Ayarlar'da gösterilir)
     var widgetWriteError: String?
@@ -105,8 +113,8 @@ final class AppStore {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = true
-        panel.prompt = "Ekle"
-        panel.message = "Projeye ait klasörleri seçin"
+        panel.prompt = L("Ekle", "Add")
+        panel.message = L("Projeye ait klasörleri seçin", "Choose project folders")
         guard panel.runModal() == .OK else { return }
         addProjects(panel.urls)
     }
@@ -129,14 +137,15 @@ final class AppStore {
         if let last { selection = .project(last.id) }
         save()
         refreshBranches()
+        refreshIcons()
     }
 
     func removeProject(_ p: Project) {
         let related = sessions(in: p.id)
         if related.contains(where: \.isRunning) {
-            guard confirm("\"\(p.name)\" kaldırılsın mı?",
-                          "Bu projedeki \(related.count) terminal kapatılacak. Klasördeki dosyalara dokunulmaz.",
-                          action: "Kaldır") else { return }
+            guard confirm(L("\"\(p.name)\" kaldırılsın mı?", "Remove \"\(p.name)\"?"),
+                          L("Bu projedeki \(related.count) terminal kapatılacak. Klasördeki dosyalara dokunulmaz.", "\(related.count) terminal(s) in this project will be closed. Files in the folder are not touched."),
+                          action: L("Kaldır", "Remove")) else { return }
         }
         related.forEach { $0.terminate() }
         sessions.removeAll { $0.projectID == p.id }
@@ -190,15 +199,15 @@ final class AppStore {
         let owner = await PortMonitor.owner(of: port)
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "Port \(port) zaten kullanımda"
+        alert.messageText = L("Port \(port) zaten kullanımda", "Port \(port) is already in use")
         if let owner {
-            alert.informativeText = "\(owner.name) (pid \(owner.pid)) bu portu dinliyor. \"\(commandName)\" bu haliyle başlatılırsa hata verebilir."
-            alert.addButton(withTitle: "Süreci Kapat ve Başlat")
+            alert.informativeText = L("\(owner.name) (pid \(owner.pid)) bu portu dinliyor. \"\(commandName)\" bu haliyle başlatılırsa hata verebilir.", "\(owner.name) (pid \(owner.pid)) is listening on this port. \"\(commandName)\" may fail if started as is.")
+            alert.addButton(withTitle: L("Süreci Kapat ve Başlat", "Stop Process and Start"))
         } else {
-            alert.informativeText = "Bu portu başka bir süreç dinliyor. \"\(commandName)\" bu haliyle başlatılırsa hata verebilir."
+            alert.informativeText = L("Bu portu başka bir süreç dinliyor. \"\(commandName)\" bu haliyle başlatılırsa hata verebilir.", "Another process is listening on this port. \"\(commandName)\" may fail if started as is.")
         }
-        alert.addButton(withTitle: "Yine de Başlat")
-        alert.addButton(withTitle: "Vazgeç")
+        alert.addButton(withTitle: L("Yine de Başlat", "Start Anyway"))
+        alert.addButton(withTitle: L("Vazgeç", "Cancel"))
         let response = alert.runModal()
 
         if let owner {
@@ -385,7 +394,7 @@ final class AppStore {
                     dir = try await Git.addWorktree(repo: proj.path, branch: branch)
                     wtBranch = branch
                 } catch {
-                    errorMessage = "Worktree oluşturulamadı (\(branch)):\n\(error.localizedDescription)"
+                    errorMessage = L("Worktree oluşturulamadı (\(branch)):\n\(error.localizedDescription)", "Couldn’t create worktree (\(branch)):\n\(error.localizedDescription)")
                     break
                 }
             }
@@ -457,8 +466,8 @@ final class AppStore {
             return
         }
         if s.isRunning, s.kind.isAgent {
-            guard confirm("\"\(s.name)\" yeniden başlatılsın mı?", "Çalışan süreç sonlandırılıp aynı komut tekrar başlatılacak.",
-                          action: "Yeniden Başlat") else { return }
+            guard confirm(L("\"\(s.name)\" yeniden başlatılsın mı?", "Restart \"\(s.name)\"?"), L("Çalışan süreç sonlandırılıp aynı komut tekrar başlatılacak.", "The running process will be stopped and the same command started again."),
+                          action: L("Yeniden Başlat", "Restart")) else { return }
         }
         s.terminate()
         makeSession(s.spec, at: idx)
@@ -467,8 +476,8 @@ final class AppStore {
 
     func close(_ s: TerminalSession, confirmIfRunning: Bool = true) {
         if confirmIfRunning, s.isRunning, s.kind.isAgent {
-            guard confirm("\"\(s.name)\" kapatılsın mı?", "Bu oturumda çalışan süreç sonlandırılacak.",
-                          action: "Kapat") else { return }
+            guard confirm(L("\"\(s.name)\" kapatılsın mı?", "Close \"\(s.name)\"?"), L("Bu oturumda çalışan süreç sonlandırılacak.", "The process running in this session will be terminated."),
+                          action: L("Kapat", "Close")) else { return }
         }
         let visible = visibleSessions
         let pos = visible.firstIndex { $0 === s }
@@ -487,12 +496,12 @@ final class AppStore {
 
     func rename(_ s: TerminalSession) {
         let alert = NSAlert()
-        alert.messageText = "Yeniden adlandır"
+        alert.messageText = L("Yeniden adlandır", "Rename")
         let field = NSTextField(string: s.name)
         field.frame = NSRect(x: 0, y: 0, width: 260, height: 24)
         alert.accessoryView = field
-        alert.addButton(withTitle: "Kaydet")
-        alert.addButton(withTitle: "Vazgeç")
+        alert.addButton(withTitle: L("Kaydet", "Save"))
+        alert.addButton(withTitle: L("Vazgeç", "Cancel"))
         alert.window.initialFirstResponder = field
         guard alert.runModal() == .alertFirstButtonReturn, let name = field.stringValue.nonEmpty else { return }
         s.name = name
@@ -635,7 +644,58 @@ final class AppStore {
             if self.claudeUsage != result.claude { self.claudeUsage = result.claude }
             if self.codexUsage != result.codex { self.codexUsage = result.codex }
             self.publishWidget()
+            if self.agentHealth.isEmpty { self.checkAgents() }
         }
+    }
+
+    // MARK: Ajan bağlantısı
+
+    /// Claude Code ve Codex kurulu mu, oturum açık mı? (arka planda; birkaç saniye sürebilir)
+    func checkAgents() {
+        guard !agentCheckRunning else { return }
+        agentCheckRunning = true
+        for agent in AgentKind.allCases where agentHealth[agent] == nil {
+            agentHealth[agent] = AgentHealth()
+        }
+        let claudeActivity = claudeUsage?.lastActivity
+        let codexActivity = codexUsage?.lastActivity
+        Task {
+            async let claude = AgentDoctor.check(.claude, lastActivity: claudeActivity)
+            async let codex = AgentDoctor.check(.codex, lastActivity: codexActivity)
+            let results = await (claude, codex)
+            self.agentHealth[.claude] = results.0
+            self.agentHealth[.codex] = results.1
+            self.agentCheckRunning = false
+        }
+    }
+
+    func health(_ agent: AgentKind) -> AgentHealth? { agentHealth[agent] }
+
+    /// Kurulum / giriş komutunu DevApp içinde bir terminalde çalıştırır (proje yoksa panoya kopyalar).
+    func runAgentSetup(_ command: String, title: String) {
+        guard let target = currentProject ?? projects.first else {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(command, forType: .string)
+            errorMessage = L("Henüz proje yok. Komut panoya kopyalandı; bir terminale yapıştırıp çalıştırın:\n\(command)",
+                             "No projects yet. The command was copied to the clipboard; paste it into a terminal:\n\(command)")
+            showMainWindow()
+            return
+        }
+        let spec = SessionSpec(projectID: target.id, name: uniqueName(title), kind: .custom,
+                               command: command, directory: NSHomeDirectory())
+        let s = makeSession(spec)
+        showMainWindow()
+        setFilter(target.id)
+        focus(s)
+        save()
+    }
+
+    // MARK: Dil
+
+    func setLanguage(_ language: AppLanguage) {
+        LanguageStore.shared.update(language)
+        refreshUsage()                 // kullanım notları yeni dilde gelsin
+        publishWidget(force: true)     // widget da aynı dile geçsin
     }
 
     /// Masaüstü widget'ının okuduğu özet dosyasını yazar; değiştiyse widget'ı yeniler.
@@ -651,16 +711,19 @@ final class AppStore {
             let ports = p.commands.compactMap(\.effectivePort).filter { listeningPorts.contains($0) }
             return ProjectSnapshot(id: p.id, name: p.name, initials: p.initials, colorHex: p.accentHex,
                                    state: st, runningCommands: runningCommandCount(p),
-                                   agents: agentCount(p), ports: Array(Set(ports)).sorted())
+                                   agents: agentCount(p), ports: Array(Set(ports)).sorted(),
+                                   hasIcon: projectIcons[p.id] != nil)
         }
         let snap = WidgetSnapshot(updatedAt: Date(), projects: projectsSnap, attention: attentionCount,
-                                  claude: claudeUsage, codex: codexUsage)
+                                  claude: claudeUsage, codex: codexUsage,
+                                  language: LanguageStore.shared.resolvedCode)
         // updatedAt hariç değişmediyse yazma
         if !force, var previous = lastPublished {
             previous.updatedAt = snap.updatedAt
             if previous == snap { return }
         }
         lastPublished = snap
+        if SharedStore.groupID != nil { writeWidgetIcons() }
         let error = SharedStore.write(snap)
         if widgetWriteError != error { widgetWriteError = error }
         if error == nil { widgetLastWrite = Date() } else { return }
@@ -685,6 +748,74 @@ final class AppStore {
         case "project":
             if let id = UUID(uuidString: url.lastPathComponent), let p = project(id) { openProject(p) }
         default: openDashboard()
+        }
+    }
+
+    // MARK: Proje logoları
+
+    func refreshIcons(_ only: [Project]? = nil) {
+        for p in only ?? projects {
+            let id = p.id, root = p.path
+            let custom = p.iconPath, disabled = p.iconDisabled ?? false
+            Task {
+                let path: String? = await Task.detached(priority: .utility) { () -> String? in
+                    if disabled { return nil }
+                    if let custom, FileManager.default.fileExists(atPath: custom) { return custom }
+                    return ProjectIconFinder.find(in: root)
+                }.value
+                let image = path.flatMap { NSImage(contentsOfFile: $0) }
+                self.iconSources[id] = path
+                if self.projectIcons[id] !== image { self.projectIcons[id] = image }
+                self.publishWidget(force: true)
+            }
+        }
+    }
+
+    func chooseIcon(for p: Project) {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image, .icns]
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = URL(fileURLWithPath: p.path)
+        panel.message = L("\(p.name) için logo seçin", "Choose a logo for \(p.name)")
+        guard panel.runModal() == .OK, let url = panel.url,
+              let i = projects.firstIndex(where: { $0.id == p.id }) else { return }
+        projects[i].iconPath = url.path
+        projects[i].iconDisabled = false
+        save()
+        refreshIcons([projects[i]])
+    }
+
+    func autoIcon(for p: Project) {
+        guard let i = projects.firstIndex(where: { $0.id == p.id }) else { return }
+        projects[i].iconPath = nil
+        projects[i].iconDisabled = false
+        save()
+        refreshIcons([projects[i]])
+    }
+
+    func removeIcon(for p: Project) {
+        guard let i = projects.firstIndex(where: { $0.id == p.id }) else { return }
+        projects[i].iconPath = nil
+        projects[i].iconDisabled = true
+        projectIcons[p.id] = nil
+        save()
+        publishWidget(force: true)
+    }
+
+    /// Widget'ın okuyabilmesi için logoların küçük kopyalarını App Group kabına yazar
+    @ObservationIgnored private var agentIconsWritten = false
+
+    private func writeWidgetIcons() {
+        if !agentIconsWritten {
+            agentIconsWritten = true
+            AgentIcons.writeForWidget()
+        }
+        for (id, image) in projectIcons {
+            let source = iconSources[id] ?? ""
+            guard widgetIconsWritten[id] != source, let url = SharedStore.iconURL(for: id),
+                  let data = ProjectIconFinder.pngData(from: image) else { continue }
+            try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if (try? data.write(to: url, options: .atomic)) != nil { widgetIconsWritten[id] = source }
         }
     }
 
@@ -789,13 +920,13 @@ final class AppStore {
     func openInXcode(path: String? = nil) {
         guard let path = path ?? targetPath else { return }
         if !Launcher.open(path, with: Launcher.xcode) {
-            errorMessage = "Xcode bulunamadı. App Store'dan yükleyin veya xcode-select ile seçin."
+            errorMessage = L("Xcode bulunamadı. App Store'dan yükleyin veya xcode-select ile seçin.", "Xcode not found. Install it from the App Store or select it with xcode-select.")
         }
     }
 
     func open(with app: ExternalApp, path: String? = nil) {
         guard let path = path ?? targetPath else { return }
-        if !Launcher.open(path, with: app) { errorMessage = "\(app.name) bulunamadı." }
+        if !Launcher.open(path, with: app) { errorMessage = L("\(app.name) bulunamadı.", "\(app.name) not found.") }
     }
 
     func openInExternalTerminal(path: String? = nil) {
@@ -823,6 +954,7 @@ final class AppStore {
         if tickCount % 2 == 1 { refreshPorts() }
         if tickCount % 30 == 0 { refreshBranches() }
         if tickCount % 60 == 5 { refreshUsage() }
+        if tickCount % 900 == 450 { checkAgents() }
         if tickCount % 5 == 0 { publishWidget() }
         let appActive = NSApp.isActive
 
@@ -943,6 +1075,7 @@ final class AppStore {
         }
         focusedSessionID = sessions.first?.id
         refreshBranches()
+        refreshIcons()
         refreshUsage()
         save()
     }
@@ -952,9 +1085,9 @@ final class AppStore {
     func confirmQuit() -> Bool {
         let running = sessions.filter { $0.isRunning && $0.kind != .shell }
         guard !running.isEmpty else { return true }
-        return confirm("DevApp kapatılsın mı?",
-                       "\(running.count) ajan/komut hâlâ çalışıyor. Çıkarsanız sonlandırılacak.",
-                       action: "Çık")
+        return confirm(L("DevApp kapatılsın mı?", "Quit DevApp?"),
+                       L("\(running.count) ajan/komut hâlâ çalışıyor. Çıkarsanız sonlandırılacak.", "\(running.count) agent(s)/command(s) still running. They will be terminated if you quit."),
+                       action: L("Çık", "Quit"))
     }
 
     func shutdown() {
@@ -968,7 +1101,7 @@ final class AppStore {
         alert.informativeText = text
         alert.alertStyle = .warning
         alert.addButton(withTitle: action)
-        alert.addButton(withTitle: "Vazgeç")
+        alert.addButton(withTitle: L("Vazgeç", "Cancel"))
         return alert.runModal() == .alertFirstButtonReturn
     }
 }

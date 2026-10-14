@@ -49,11 +49,11 @@ struct ContentView: View {
             let open = openWindow
             store.openMainWindowAction = { open(id: "main") }
         }
-        .alert("Bir sorun oluştu", isPresented: Binding(
+        .alert(L("Bir sorun oluştu", "Something went wrong"), isPresented: Binding(
             get: { store.errorMessage != nil },
             set: { if !$0 { store.errorMessage = nil } }
         )) {
-            Button("Tamam", role: .cancel) {}
+            Button(L("Tamam", "OK"), role: .cancel) {}
         } message: {
             Text(store.errorMessage ?? "")
         }

@@ -1,130 +1,128 @@
-# DevApp
+<p align="center">
+  <img src="docs/images/banner.png" alt="DevApp — run every project, terminal and AI agent from one native macOS window" width="100%">
+</p>
 
-Claude, Codex ve terminal oturumlarını **tek pencerede** yönetmek için native macOS uygulaması.
-Amaç: birden fazla ajanı ve işi aynı anda yürütürken tüm terminalleri görmek, aralarında hızlı geçmek
-ve projeyi Xcode'da tek tıkla açmak.
+<p align="center">
+  <a href="#install"><img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111?logo=apple&logoColor=white"></a>
+  <img alt="Swift 5.10" src="https://img.shields.io/badge/Swift-5.10-F05138?logo=swift&logoColor=white">
+  <img alt="SwiftUI" src="https://img.shields.io/badge/UI-SwiftUI-0A84FF">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-5BE39A"></a>
+</p>
 
-## Özellikler (v0.4)
+<p align="center">
+  <b>English</b> · <a href="README.tr.md">Türkçe</a>
+</p>
 
-- **Görsel pano** — açılışta her proje renkli bir kart: harf ikonu, durum (Çalışıyor / Dikkat / Hata / Durdu),
-  son çıktı satırlarının canlı önizlemesi, ▶/■ komutlar ve portlar, branch, ajan sayısı, Xcode ve büyük
-  Başlat/Durdur düğmesi. Tümü / Çalışanlar / Dikkat bekleyen / Durmuş filtreleri, arama (`⌘F`), altta açık portlar.
-  Karta tıklayınca proje ekranı açılır: büyük başlık, komut düğmeleri ve projenin terminal ızgarası.
-  Soldaki ince şeritte pano, tüm terminaller ve proje ikonları var (`⌘0` pano, `⇧⌘0` tüm terminaller).
-- **Dock menüsü** — Dock'taki DevApp simgesine sağ tıklayınca: sizi bekleyen oturumlar, projelere göre açık
-  terminaller (▶︎ komut + port, ✳︎ Claude, ◆ Codex, $ terminal, ■ kapanmış), proje alt menüsü (aç, başlat/durdur,
-  Xcode, yeni Claude), "Projeyi Başlat" ve Pano/Tüm Terminaller. Seçince pencere açılır ve o terminale odaklanır.
-- **Claude & Codex kullanımı** — panonun üstünde iki kart: 5 saatlik ve haftalık limit yüzdesi (sıfırlanmaya kalan
-  süreyle), bugünkü ve son 5 saatteki token. Codex limitleri `~/.codex/sessions` kayıtlarından otomatik okunur;
-  Claude token'ları `~/.claude/projects` kayıtlarından sayılır, plan yüzdesi için Ayarlar > Kullanım'dan
-  "Claude plan limitini göster"i açın (Claude Code oturum anahtarı Anahtar Zinciri'nden okunur, macOS izin ister).
-- **Masaüstü widget'ları** — "Claude & Codex Kullanımı" (küçük/orta) ve "DevApp Projeleri" (orta/büyük: çalışan
-  projeler, açık portlar, sizi bekleyenler, büyük boyda kullanım). Satıra tıklayınca DevApp o projeyi açar.
-  Widget için Xcode projesiyle derlenmesi gerekir (aşağıda).
-- **Uygulama ikonu** — `Support/AppIcon.icns` (kaynağı `scripts/make-icon.py`); `swift run` ile çalışırken de Dock'ta görünür.
+---
 
-- **Projeyi tek tıkla çalıştır** — proje eklenince komutlar otomatik bulunur: `package.json` script'leri
-  (npm/pnpm/yarn/bun), Makefile hedefleri, docker compose, Procfile, Flutter, Django, Rails, Cargo, Go, Swift;
-  monorepo'da bir alt seviyedeki klasörler de taranır. Kenar çubuğunda her komutun yanında ▶/■ var;
-  proje satırındaki ▶ ya da `⌥⌘R` işaretli komutların hepsini (ör. web + api + compose) birlikte başlatır.
-  Durdur önce `Ctrl-C` gönderir, kapanmazsa 3 sn sonra sonlandırır. Komut çıktısında `localhost:3000` gibi bir
-  adres görünürse 🌐 ile tarayıcıda açılır. Komutları `⌥⌘E` ile düzenleyebilirsiniz.
-- **Portlar** — her komutun portu projeden bulunur (`--port`, `.env` içindeki `PORT=`, `vite.config`,
-  docker compose eşlemesi, framework varsayılanı: Vite 5173, Next 3000, Django 8000…) ve kenar çubuğunda
-  `:3000` rozeti olarak görünür; port dinleniyorsa rozet yeşil olur, tıklayınca tarayıcıda açılır.
-  Komut düzenleyicide Port sütununa farklı bir değer (ör. `8779`) yazarsanız komut `PORT=8779` ve uygunsa
-  `--port 8779` ile başlatılır. Başlatırken port doluysa onu tutan süreç gösterilir; tek tıkla kapatıp başlatabilirsiniz.
-- **Tüm terminaller tek ekranda** — ızgara modunda her oturum canlı; odak modunda biri büyük, diğerleri altta.
-- **Gerçek terminal** — SwiftTerm ile gerçek PTY; `vim`, `htop`, Claude Code ve Codex TUI'leri olduğu gibi çalışır.
-- **Tek tıkla ajan** — projede Claude / Codex / Terminal / özel komut (ör. `npm run dev`) oturumu.
-  Ajan çıkınca terminal kapanmaz, aynı klasörde kabuğa düşer.
-- **Çoklu ajan + git worktree** — "Gelişmiş…" ile aynı görevden N ajan başlat; her biri
-  `~/.devapp/worktrees/<proje>/<branch>` altında kendi worktree'sinde çalışır, birbirini ezmez.
-- **Durum takibi** — Çalışıyor / Boşta / Kapandı rozetleri. Uzun süren iş bittiğinde veya ajan zil
-  çaldığında (girdi beklerken) oturum turuncuya döner, Dock'ta sayaç çıkar. `⌘J` ile sıradakine atla.
-- **Toplu gönderim** — seçili terminallere aynı anda metin, `⌃C` veya `Esc` gönder.
-- **Dış uygulamalar** — odaktaki terminalin klasörünü Xcode'da (`.xcworkspace` › `.xcodeproj` › `Package.swift`
-  otomatik bulunur), Finder'da, VS Code/Cursor/Zed'de veya Ghostty/iTerm/Terminal'de aç.
-- **Kalıcılık** — projeler, komutlar, portlar ve oturumlar her değişiklikte
-  `~/Library/Application Support/DevApp/state.json` (+ `state.backup.json`) dosyasına yazılır; bilgisayar yeniden başlasa da kalır;
-  açılışta yeniden başlatılır (isteğe bağlı olarak ajan konuşması sürdürülür).
+**DevApp** is a native macOS app for people who juggle several projects and several AI coding agents at once.
+Instead of opening a new terminal tab for every dev server, every `claude` and every `codex` session, you add your
+project folders once and run, watch and manage everything from a single window.
 
-## Kısayollar
+<p align="center">
+  <img src="docs/images/dashboard.png" alt="Dashboard: project cards with live output, commands, ports and Claude / Codex usage" width="100%">
+</p>
 
-| Kısayol | İşlem |
+<sub>Screenshots use sample projects. DevApp speaks English and Turkish (Settings › General).</sub>
+
+## Highlights
+
+|   |   |
 |---|---|
-| `⌥⌘R` | Projeyi başlat (işaretli komutlar) |
-| `⌥⌘.` | Projeyi durdur |
-| `⌥⌘E` | Proje komutlarını düzenle |
-| `⌘T` | Mevcut projede yeni terminal |
-| `⇧⌘C` / `⇧⌘K` | Yeni Claude / Codex oturumu |
-| `⌘N` | Gelişmiş yeni oturum (worktree, adet, ilk görev) |
-| `⌘O` | Proje ekle (klasörü kenar çubuğuna sürüklemek de olur) |
-| `⌘1` … `⌘9` | N. terminale odaklan |
-| `⌃Tab` / `⌃⇧Tab` | Sonraki / önceki terminal |
-| `⌘↩` | Izgara ↔ odak modu (kutu başlığına çift tık da olur) |
-| `⌘J` | Dikkat bekleyen terminale git |
-| `⇧⌘X` | Xcode'da aç |
-| `⇧⌘F` | Finder'da göster |
-| `⇧⌘T` | Harici terminalde aç |
-| `⇧⌘B` | Toplu gönderim çubuğu |
-| `⇧⌘R` / `⇧⌘W` | Terminali yeniden başlat / kapat |
+| **One-click run** | Commands are detected when you add a project — `package.json` scripts (npm / pnpm / yarn / bun), Makefile targets, Docker Compose, Procfile, Flutter, Django, Rails, Cargo, Go and SwiftPM. Press ▶ on a command or **Start** on the project to launch everything that belongs together. |
+| **Ports that make sense** | Ports are read from `--port`, `.env`, `vite.config`, compose mappings or framework defaults. Change a port inline, let DevApp find a free one, and see conflicts across all projects before they bite. If a port is taken, DevApp shows which process holds it and can stop it for you. |
+| **Monorepo aware** | `web/`, `api/`, `apps/*`, `packages/*`, `services/*` … each sub-project gets its own commands and ports, grouped on the project screen. |
+| **Real terminals** | Every session is a real PTY ([SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)), so `vim`, `htop`, Claude Code and Codex TUIs work as usual. Grid or focus layout, `⌘1…⌘9` to jump. |
+| **Built for AI agents** | Start Claude or Codex in a project with one key, optionally with a first prompt. Spawn several agents at once, each in its own **git worktree**. When an agent rings the bell or a long job finishes, the session turns orange and the Dock shows a badge. |
+| **Claude & Codex usage** | 5-hour and weekly limit usage with reset countdowns, today’s tokens and a 12-hour chart — read from local Claude Code / Codex logs. |
+| **Desktop widgets** | A usage widget and a projects widget for the macOS desktop. Click a project to jump straight into it. |
+| **Dock menu** | Right-click the Dock icon to see every open terminal grouped by project, start or stop projects, or jump to whatever is waiting for you. |
+| **Agent health check** | Settings › Agents shows whether Claude Code and Codex are installed (path and version), signed in and recently used, with one-click install and sign-in. Usage cards warn when an agent isn’t connected. |
+| **English & Turkish** | Switch the language in Settings, or follow your Mac’s language. Widgets and the Dock menu follow along. |
+| **Stays put** | Projects, commands, ports and sessions are saved on every change and come back after a restart. |
 
-## Çalıştırma
+<p align="center">
+  <img src="docs/images/project.png" alt="Project screen: grouped sub-project commands with ports and a grid of live terminals" width="100%">
+</p>
 
-Gereksinim: macOS 14+, Xcode 16+.
+<p align="center">
+  <img src="docs/images/widgets.png" alt="Desktop widgets: Claude & Codex usage rings, usage bars and a projects list" width="100%">
+</p>
+
+## Install
+
+Requirements: **macOS 14 Sonoma or later** and **Xcode 16+**.
+
+### Quick start (no widgets)
 
 ```bash
-# Xcode ile: Package.swift'i aç, DevApp şemasını seç, ⌘R
-open Package.swift
-
-# Komut satırından
-swift run
-
-# .app paketi oluşturup /Applications'a kur
-./scripts/build-app.sh release --install
+git clone https://github.com/gulmensedat/devapp.git
+cd devapp
+swift run                                   # or: open Package.swift → ⌘R
+./scripts/build-app.sh release --install    # build DevApp.app into /Applications
 ```
 
-### Masaüstü widget'lı sürüm (Xcode projesi)
+### Full build with desktop widgets
 
-WidgetKit eklentisi Swift Package ile derlenemez; Xcode projesi [XcodeGen](https://github.com/yonaskolb/XcodeGen) ile üretilir:
+WidgetKit extensions can’t be built by Swift Package Manager, so the full app uses an Xcode project generated by
+[XcodeGen](https://github.com/yonaskolb/XcodeGen). Widgets have to be signed — a free Apple ID works.
 
 ```bash
 brew install xcodegen
-echo TAKIM_ID > .devapp-team        # Xcode > Settings > Accounts > Team ID (ücretsiz Apple ID de olur)
-./scripts/xcode.sh build             # derler, /Applications'a kurar ve açar
-# ya da ./scripts/xcode.sh → Xcode'da açar, ⌘R
+echo YOUR_TEAM_ID > .devapp-team   # Xcode › Settings › Accounts › Team ID
+./scripts/xcode.sh build           # builds, installs to /Applications and opens DevApp
 ```
 
-Sonra masaüstüne sağ tık > **Widget'ları Düzenle** > **DevApp**. Widget verisi DevApp açıkken
-App Group kabına (`~/Library/Group Containers/<TAKIM>.devapp.shared/snapshot.json`) yazılır.
+Then right-click the desktop › **Edit Widgets** › **DevApp**.
 
-## Ayarlar (`⌘,`)
+## Keyboard shortcuts
 
-- Claude / Codex komutu (ör. `claude --model opus`, `codex --full-auto`)
-- Kabuk, yazı boyutu
-- **Option = Meta** varsayılan kapalı (Türkçe klavyede `@`, `#` vb. için)
-- Açılışta oturumları geri yükle / ajan konuşmasını sürdür
+| Shortcut | Action |
+|---|---|
+| `⌘0` / `⇧⌘0` | Dashboard / all terminals |
+| `⌥⌘R` / `⌥⌘.` | Start / stop the current project |
+| `⌥⌘E` | Edit project commands and ports |
+| `⌘T` · `⇧⌘C` · `⇧⌘K` | New terminal · Claude · Codex |
+| `⌘N` | New session (worktrees, multiple agents, first prompt) |
+| `⌘1` … `⌘9` | Focus terminal 1–9 |
+| `⌘↩` | Toggle grid / focus layout |
+| `⌘J` | Jump to the session that needs you |
+| `⇧⌘X` · `⇧⌘F` · `⇧⌘T` | Open in Xcode · Finder · external terminal |
+| `⇧⌘B` | Broadcast input to several terminals |
 
-## Mimari
+## Privacy
+
+DevApp runs entirely on your Mac. It has no telemetry and no server of its own.
+
+- Usage numbers come from local logs in `~/.claude/projects` and `~/.codex/sessions`.
+- **Optional:** to show Claude’s plan percentage, DevApp reads your Claude Code sign-in from the macOS Keychain
+  (you’ll be asked to allow it) and calls Anthropic’s usage endpoint — the same one Claude Code uses. Off by default.
+- The agent check only looks for Claude Code / Codex sign-in files and Keychain entries; it never reads the secret
+  or sends anything anywhere.
+- State lives in `~/Library/Application Support/DevApp/`.
+
+## How it’s built
 
 ```
 Sources/DevApp/
-  App/        DevAppApp (giriş, menüler), AppStore (tüm durum, odak, kalıcılık)
-  Models/     Project, SessionSpec, SessionKind, ayarlar
-  Terminal/   TerminalSession (PTY süreci + kalıcı NSView), AgentTerminalView
-  Services/   Git (worktree, branch), Launcher (Xcode/editör/terminal açma), CommandDetector (komut bulma)
-  Views/      Sidebar, Workspace (ızgara/odak), TerminalTile, BroadcastBar, NewSessionSheet, Settings
+  App/        entry point, menus, Dock menu, AppStore (state, focus, persistence)
+  Models/     projects, commands, sessions, settings
+  Terminal/   TerminalSession — PTY process + a terminal view that survives layout changes
+  Services/   command & port detection, port monitor, git worktrees, usage, project icons, launchers
+  Shared/     data shared with the widget extension
+  Views/      dashboard, project screen, terminal tiles, sheets, settings
+Sources/DevAppWidget/   WidgetKit extension
+project.yml             XcodeGen definition (app + widget)
 ```
 
-Kritik nokta: her oturumun `LocalProcessTerminalView`'i bir kez oluşturulur ve `TerminalHost`
-yalnızca onu taşıyıcıya takar. Böylece yerleşim değişse de süreç ve ekran geçmişi kaybolmaz.
+## Contributing
 
-## Yol haritası
+Issues and pull requests are welcome. Write every UI string as `L("Türkçe", "English")` and read
+[`AGENTS.md`](AGENTS.md) for conventions — it’s also what Claude Code and Codex read when they work on this repo.
 
-- [ ] Görev panosu: iş kartı = worktree + ajan + terminaller, durum sütunları
-- [ ] Worktree'yi birleştir/sil, diff önizleme
-- [ ] Claude Code / Codex hook'ları ile kesin "bitti / onay bekliyor" durumu
-- [ ] Bölünmüş görünüm (yan yana 2 terminal), sürükle-bırak sıralama
-- [ ] Sistem bildirimleri, komut paleti (`⌘K`)
-- [ ] Oturum başına kalıcı scrollback
+**Roadmap:** task board · worktree merge & diff · precise agent state via Claude / Codex hooks
+· command palette · `.env` management.
+
+## License
+
+[MIT](LICENSE)

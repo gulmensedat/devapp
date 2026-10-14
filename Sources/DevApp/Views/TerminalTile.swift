@@ -37,11 +37,15 @@ struct KindMark: View {
     }
 
     var body: some View {
-        Text(verbatim: style.mark)
-            .font(.system(size: size * 0.5, weight: .bold))
-            .foregroundStyle(style.fg)
-            .frame(width: size, height: size)
-            .background(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous).fill(style.bg))
+        if !session.isRunCommand, session.kind == .claude || session.kind == .codex {
+            AgentLogo(agent: session.kind == .claude ? .claude : .codex, size: size)
+        } else {
+            Text(verbatim: style.mark)
+                .font(.system(size: size * 0.5, weight: .bold))
+                .foregroundStyle(style.fg)
+                .frame(width: size, height: size)
+                .background(RoundedRectangle(cornerRadius: size * 0.27, style: .continuous).fill(style.bg))
+        }
     }
 }
 
@@ -67,7 +71,7 @@ struct TerminalTile: View {
                     Text(verbatim: attentionText)
                         .font(.system(size: 12.5))
                     Spacer()
-                    Button("Gördüm") { store.focus(session) }
+                    Button(L("Gördüm", "Got it")) { store.focus(session) }
                         .buttonStyle(.plain)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color(hex: 0x1A1206))
@@ -94,11 +98,14 @@ struct TerminalTile: View {
 
     private var attentionText: String {
         switch session.kind {
-        case .claude: return "Claude sizi bekliyor"
-        case .codex: return "Codex sizi bekliyor"
+        case .claude: return L("Claude sizi bekliyor", "Claude is waiting for you")
+        case .codex: return L("Codex sizi bekliyor", "Codex is waiting for you")
         default:
-            if case .exited(let code) = session.status { return "Komut kapandı (çıkış \(code.map { String($0) } ?? "?"))" }
-            return "İş bitti"
+            if case .exited(let code) = session.status {
+                let c = code.map { String($0) } ?? "?"
+                return L("Komut kapandı (çıkış \(c))", "Command exited (code \(c))")
+            }
+            return L("İş bitti", "Job finished")
         }
     }
 
@@ -185,7 +192,7 @@ struct TileHeader: View {
                 }
                 .buttonStyle(.plain)
                 .fixedSize()
-                .help("Tarayıcıda aç: \(url)")
+                .help(L("Tarayıcıda aç: \(url)", "Open in browser: \(url)"))
             }
 
             if session.isRunCommand {
@@ -202,13 +209,13 @@ struct TileHeader: View {
                 .toggleStyle(.checkbox)
                 .labelsHidden()
                 .fixedSize()
-                .help("Toplu gönderime dahil et")
+                .help(L("Toplu gönderime dahil et", "Include in broadcast"))
             }
 
             // İkincil düğmeler: üzerine gelince ya da odaktayken; sıkışık modda yalnızca menü + kapat
             HStack(spacing: 2) {
                 if !compact {
-                    HeaderIconButton(symbol: "hammer", help: "Bu klasörü Xcode'da aç") {
+                    HeaderIconButton(symbol: "hammer", help: L("Bu klasörü Xcode'da aç", "Open this folder in Xcode")) {
                         store.openInXcode(path: session.directory)
                     }
                 }
@@ -224,7 +231,7 @@ struct TileHeader: View {
                 .menuIndicator(.hidden)
                 .frame(width: 24, height: 24)
                 .fixedSize()
-                HeaderIconButton(symbol: "xmark", help: "Kapat (⇧⌘W)") { store.close(session) }
+                HeaderIconButton(symbol: "xmark", help: L("Kapat (⇧⌘W)", "Close (⇧⌘W)")) { store.close(session) }
             }
             .foregroundStyle(Theme.secondary)
             .opacity(hovering || isFocused ? 1 : 0.0001)

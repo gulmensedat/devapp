@@ -9,9 +9,9 @@ struct RailView: View {
             // Pencere düğmeleri (kırmızı/sarı/yeşil) için boşluk
             Color.clear.frame(height: 30)
 
-            RailButton(symbol: "square.grid.2x2", help: "Pano",
+            RailButton(symbol: "square.grid.2x2", help: L("Pano", "Dashboard"),
                        selected: store.screen == .dashboard) { store.openDashboard() }
-            RailButton(symbol: "terminal", help: "Tüm terminaller",
+            RailButton(symbol: "terminal", help: L("Tüm terminaller", "All terminals"),
                        selected: store.screen == .terminals,
                        badge: store.attentionCount > 0) { store.openTerminals() }
 
@@ -28,7 +28,7 @@ struct RailView: View {
 
             Spacer(minLength: 8)
 
-            RailButton(symbol: "plus", help: "Proje ekle", selected: false) { store.addProjectsViaPanel() }
+            RailButton(symbol: "plus", help: L("Proje ekle", "Add project"), selected: false) { store.addProjectsViaPanel() }
             SettingsLink {
                 Image(systemName: "gearshape")
                     .font(.system(size: 17, weight: .medium))
@@ -37,7 +37,7 @@ struct RailView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Ayarlar")
+            .help(L("Ayarlar", "Settings"))
         }
         .padding(.bottom, 14)
         .frame(width: 68)
@@ -141,33 +141,38 @@ struct ProjectMenu: View {
     let project: Project
 
     private func colorName(_ i: Int) -> String {
-        ["Mavi", "Turuncu", "Turkuaz", "Sarı", "Pembe", "Gök mavisi", "Mor", "Yeşil"][i % 8]
+        [L("Mavi", "Blue"), L("Turuncu", "Orange"), L("Turkuaz", "Teal"), L("Sarı", "Yellow"), L("Pembe", "Pink"), L("Gök mavisi", "Sky blue"), L("Mor", "Purple"), L("Yeşil", "Green")][i % 8]
     }
 
     var body: some View {
-        Button("Projeyi Başlat") { store.startProject(project) }
-        Button("Projeyi Durdur") { store.stopProject(project) }
+        Button(L("Projeyi Başlat", "Start Project")) { store.startProject(project) }
+        Button(L("Projeyi Durdur", "Stop Project")) { store.stopProject(project) }
             .disabled(!store.projectHasRunningCommands(project))
-        Button("Komutları Düzenle…") { store.editCommands(project) }
+        Button(L("Komutları Düzenle…", "Edit Commands…")) { store.editCommands(project) }
         Divider()
-        Button("Yeni Terminal") { store.quickNew(.shell, projectID: project.id) }
-        Button("Yeni Claude") { store.quickNew(.claude, projectID: project.id) }
-        Button("Yeni Codex") { store.quickNew(.codex, projectID: project.id) }
-        Button("Yeni Oturum (Gelişmiş)…") { store.requestNewSession(kind: .claude, projectID: project.id) }
+        Button(L("Yeni Terminal", "New Terminal")) { store.quickNew(.shell, projectID: project.id) }
+        Button(L("Yeni Claude", "New Claude")) { store.quickNew(.claude, projectID: project.id) }
+        Button(L("Yeni Codex", "New Codex")) { store.quickNew(.codex, projectID: project.id) }
+        Button(L("Yeni Oturum (Gelişmiş)…", "New Session (Advanced)…")) { store.requestNewSession(kind: .claude, projectID: project.id) }
         Divider()
-        Button("Xcode'da Aç") { store.openInXcode(path: project.path) }
-        Button("Finder'da Göster") { store.revealInFinder(path: project.path) }
-        Button("Harici Terminalde Aç") { store.openInExternalTerminal(path: project.path) }
-        Button("Yolu Kopyala") { Launcher.copyPath(project.path) }
+        Button(L("Xcode'da Aç", "Open in Xcode")) { store.openInXcode(path: project.path) }
+        Button(L("Finder'da Göster", "Show in Finder")) { store.revealInFinder(path: project.path) }
+        Button(L("Harici Terminalde Aç", "Open in External Terminal")) { store.openInExternalTerminal(path: project.path) }
+        Button(L("Yolu Kopyala", "Copy Path")) { Launcher.copyPath(project.path) }
         Divider()
-        Menu("Renk") {
-            Button("Otomatik") { store.setColor(nil, for: project.id) }
+        Menu("Logo") {
+            Button(L("Dosya Seç…", "Choose File…")) { store.chooseIcon(for: project) }
+            Button(L("Projeden Otomatik Bul", "Find in Project")) { store.autoIcon(for: project) }
+            Button(L("Logo Kullanma (harf ikonu)", "No Logo (letter icon)")) { store.removeIcon(for: project) }
+        }
+        Menu(L("Renk", "Color")) {
+            Button(L("Otomatik", "Automatic")) { store.setColor(nil, for: project.id) }
             ForEach(Array(Theme.projectPalette.enumerated()), id: \.offset) { i, _ in
                 Button(colorName(i)) { store.setColor(i, for: project.id) }
             }
         }
         Divider()
-        Button("Projeyi Kaldır", role: .destructive) { store.removeProject(project) }
+        Button(L("Projeyi Kaldır", "Remove Project"), role: .destructive) { store.removeProject(project) }
     }
 }
 
@@ -189,17 +194,17 @@ struct SessionMenuItems: View {
     let session: TerminalSession
 
     var body: some View {
-        Button("Odakla") { store.focus(session) }
-        Button(store.layout == .focus ? "Izgaraya Dön" : "Odak Modunda Aç") { store.toggleFocusLayout(on: session) }
+        Button(L("Odakla", "Focus")) { store.focus(session) }
+        Button(store.layout == .focus ? L("Izgaraya Dön", "Back to Grid") : L("Odak Modunda Aç", "Open in Focus Mode")) { store.toggleFocusLayout(on: session) }
         Divider()
-        Button("Xcode'da Aç") { store.openInXcode(path: session.directory) }
-        Button("Finder'da Göster") { store.revealInFinder(path: session.directory) }
-        Button("Harici Terminalde Aç") { store.openInExternalTerminal(path: session.directory) }
-        Button("Yolu Kopyala") { Launcher.copyPath(session.directory) }
+        Button(L("Xcode'da Aç", "Open in Xcode")) { store.openInXcode(path: session.directory) }
+        Button(L("Finder'da Göster", "Show in Finder")) { store.revealInFinder(path: session.directory) }
+        Button(L("Harici Terminalde Aç", "Open in External Terminal")) { store.openInExternalTerminal(path: session.directory) }
+        Button(L("Yolu Kopyala", "Copy Path")) { Launcher.copyPath(session.directory) }
         Divider()
-        Button("Yeniden Adlandır…") { store.rename(session) }
-        Button("Yeniden Başlat") { store.restart(session) }
-        Button("Kapat", role: .destructive) { store.close(session) }
+        Button(L("Yeniden Adlandır…", "Rename…")) { store.rename(session) }
+        Button(L("Yeniden Başlat", "Restart")) { store.restart(session) }
+        Button(L("Kapat", "Close"), role: .destructive) { store.close(session) }
     }
 }
 
@@ -210,18 +215,18 @@ struct CommandMenuItems: View {
 
     var body: some View {
         let running = store.isCommandRunning(command.id)
-        Button(running ? "Durdur" : "Çalıştır") { store.toggle(command, in: project) }
-        Button("Yeniden Başlat") {
+        Button(running ? L("Durdur", "Stop") : L("Çalıştır", "Run")) { store.toggle(command, in: project) }
+        Button(L("Yeniden Başlat", "Restart")) {
             if let s = store.commandSession(command.id) { store.restart(s) } else { store.run(command, in: project) }
         }
         if let s = store.commandSession(command.id) {
-            if let url = store.liveURL(for: s) { Button("Tarayıcıda Aç (\(url))") { store.openURL(url) } }
-            Button("Terminali Göster") { store.focus(s) }
-            Button("Çıktıyı Kapat") { store.close(s) }
+            if let url = store.liveURL(for: s) { Button(L("Tarayıcıda Aç (\(url))", "Open in Browser (\(url))")) { store.openURL(url) } }
+            Button(L("Terminali Göster", "Show Terminal")) { store.focus(s) }
+            Button(L("Çıktıyı Kapat", "Close Output")) { store.close(s) }
         }
         Divider()
-        Button(command.effectivePort == nil ? "Port Ata…" : "Portu Değiştir…") { store.editCommands(project) }
-        Button("Komutları Düzenle…") { store.editCommands(project) }
+        Button(command.effectivePort == nil ? L("Port Ata…", "Assign Port…") : L("Portu Değiştir…", "Change Port…")) { store.editCommands(project) }
+        Button(L("Komutları Düzenle…", "Edit Commands…")) { store.editCommands(project) }
     }
 }
 

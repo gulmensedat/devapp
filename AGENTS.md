@@ -10,7 +10,10 @@ Native macOS (SwiftUI, macOS 14+) çoklu ajan / terminal yöneticisi. Swift Pack
 
 ## Kurallar
 
-- Arayüz metinleri Türkçe.
+- Arayüz Türkçe + İngilizce. Görünen her metin `L("Türkçe", "English")` ile yazılır
+  (`Sources/DevApp/Shared/Localization.swift`). `LanguageStore` @Observable olduğu için `L` çağıran
+  görünümler dil değişince kendiliğinden yenilenir. Widget dili `WidgetSnapshot.language` ile alır.
+  Ayar anahtarları, komutlar, dosya yolları ve SF Symbol adları `L` ile sarılmaz.
 - Swift 5 dil modu; UI ve store `@MainActor`. SwiftTerm delegate çağrıları ana kuyrukta gelir,
   `MainActor.assumeIsolated` ile köprülenir.
 - Terminal NSView'leri `TerminalSession` sahipliğindedir. Asla SwiftUI içinde yeni `LocalProcessTerminalView`
@@ -21,5 +24,7 @@ Native macOS (SwiftUI, macOS 14+) çoklu ajan / terminal yöneticisi. Swift Pack
 - Yeni ayar eklerken `SettingsKey` + `AppSettings` + `SettingsView` üçünü birlikte güncelle.
 - Port, PID gibi sayıları `Text(verbatim:)` ile yaz: `Text("\(port)")` Türkçe yerel ayarda binlik ayraç ekler (3322 → "3.322").
 - Widget: `Sources/DevAppWidget` (WidgetKit eklentisi) yalnızca `project.yml` (XcodeGen) ile derlenir;
-  uygulama ile paylaşılan modeller `Sources/DevApp/Shared/` altında ve yalnızca Foundation kullanır.
+  uygulama ile paylaşılan modeller `Sources/DevApp/Shared/` altında ve yalnızca Foundation/Observation kullanır.
 - Kullanım verisi: `UsageService` (actor). Claude: `~/.claude/projects/**/*.jsonl`, Codex: `~/.codex/sessions/**/rollout-*`.
+- Ajan bağlantısı: `AgentDoctor` kurulumu giriş kabuğunda (`$SHELL -ilc`), oturumu Anahtar Zinciri kaydının
+  varlığı (şifre okunmaz) / `~/.codex/auth.json` ile denetler; sonuç `AppStore.agentHealth`'te, Ayarlar › Ajanlar'da.

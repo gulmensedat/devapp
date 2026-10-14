@@ -60,12 +60,18 @@ actor UsageService {
         var usage = ProviderUsage(name: "Claude")
         let roots = claudeRoots
         guard !roots.isEmpty else {
-            usage.note = "Claude Code kaydı bulunamadı"
+            usage.note = L("Claude Code kaydı bulunamadı", "No Claude Code logs found")
             return usage
         }
         let dayStart = Calendar.current.startOfDay(for: now)
         let windowStart = now.addingTimeInterval(-5 * 3600)
-        let since = min(dayStart, windowStart)
+        // Saatlik grafik için son 12 saat de okunur
+        let since = min(dayStart, now.addingTimeInterval(-12 * 3600))
+        var hourly = [Int](repeating: 0, count: 12)
+        func addHourly(_ time: Date, _ tokens: Int) {
+            let hoursAgo = Int(now.timeIntervalSince(time) / 3600)
+            if hoursAgo >= 0, hoursAgo < 12 { hourly[11 - hoursAgo] += tokens }
+        }
 
         var seen = Set<String>()
         var today = 0, window = 0
@@ -92,6 +98,7 @@ actor UsageService {
                 for e in entries where seen.insert(e.id).inserted {
                     if e.time >= dayStart { today += e.tokens }
                     if e.time >= windowStart { window += e.tokens }
+                    addHourly(e.time, e.tokens)
                     if last == nil || e.time > last! { last = e.time }
                 }
             }
@@ -101,6 +108,7 @@ actor UsageService {
 
         usage.todayTokens = today
         usage.windowTokens = window
+        usage.hourly = hourly
         usage.lastActivity = last
         return usage
     }
@@ -131,7 +139,7 @@ actor UsageService {
 
         guard let token = Self.claudeAccessToken() else {
             let r: (usage: (Double?, Date?, Double?, Date?), note: String?) =
-                ((nil, nil, nil, nil), "Claude oturum anahtarı okunamadı")
+                ((nil, nil, nil, nil), L("Claude oturum anahtarı okunamadı", "Couldn’t read the Claude sign-in"))
             planCache = (now, r.usage, r.note)
             return r
         }
@@ -146,14 +154,14 @@ actor UsageService {
             let (data, response) = try await URLSession.shared.data(for: request)
             let status = (response as? HTTPURLResponse)?.statusCode ?? 0
             if status == 401 || status == 403 {
-                result.note = "Claude oturumu yenilenmeli (Claude Code'u bir kez açın)"
+                result.note = L("Claude oturumu yenilenmeli (Claude Code'u bir kez açın)", "Claude sign-in needs a refresh (open Claude Code once)")
             } else if let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 result.usage = Self.parsePlan(obj)
             } else {
-                result.note = "Plan kullanımı okunamadı"
+                result.note = L("Plan kullanımı okunamadı", "Couldn’t read plan usage")
             }
         } catch {
-            result.note = "Plan kullanımı alınamadı (ağ)"
+            result.note = L("Plan kullanımı alınamadı (ağ)", "Couldn’t fetch plan usage (network)")
         }
         planCache = (now, result.usage, result.note)
         return result
@@ -219,12 +227,18 @@ actor UsageService {
         let fm = FileManager.default
         let root = codexSessionsRoot
         guard fm.fileExists(atPath: root.path) else {
-            usage.note = "Codex kaydı bulunamadı"
+            usage.note = L("Codex kaydı bulunamadı", "No Codex logs found")
             return usage
         }
         let dayStart = Calendar.current.startOfDay(for: now)
         let windowStart = now.addingTimeInterval(-5 * 3600)
-        let since = min(dayStart, windowStart)
+        // Saatlik grafik için son 12 saat de okunur
+        let since = min(dayStart, now.addingTimeInterval(-12 * 3600))
+        var hourly = [Int](repeating: 0, count: 12)
+        func addHourly(_ time: Date, _ tokens: Int) {
+            let hoursAgo = Int(now.timeIntervalSince(time) / 3600)
+            if hoursAgo >= 0, hoursAgo < 12 { hourly[11 - hoursAgo] += tokens }
+        }
 
         // Son 7 günün klasörleri (limit bilgisi için en son olayı bulmak gerekebilir)
         var files: [(URL, Date)] = []
@@ -278,12 +292,14 @@ actor UsageService {
                 if delta < 0 { delta = 0 }
                 if time >= dayStart { today += delta }
                 if time >= windowStart { window += delta }
+                addHourly(time, delta)
                 if delta > 0, last == nil || time > last! { last = time }
             }
         }
 
         usage.todayTokens = today
         usage.windowTokens = window
+        usage.hourly = hourly
         usage.lastActivity = last
 
         if let latest = latestLimits {
@@ -312,7 +328,7 @@ actor UsageService {
                 }
             }
         } else if files.isEmpty {
-            usage.note = "Son 7 günde Codex oturumu yok"
+            usage.note = L("Son 7 günde Codex oturumu yok", "No Codex sessions in the last 7 days")
         }
         return usage
     }

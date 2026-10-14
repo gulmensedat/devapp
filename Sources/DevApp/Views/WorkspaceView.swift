@@ -6,10 +6,10 @@ struct AllTerminalsScreen: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Tüm Terminaller")
+                    Text(L("Tüm Terminaller", "All Terminals"))
                         .font(.system(size: 26, weight: .bold))
                         .foregroundStyle(Theme.textStrong)
-                    Text("Her projedeki komutlar, ajanlar ve terminaller")
+                    Text(L("Her projedeki komutlar, ajanlar ve terminaller", "Commands, agents and terminals across all projects"))
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.secondary)
                 }
@@ -52,12 +52,12 @@ struct TerminalArea: View {
                             .fill(store.showBroadcast ? Theme.accentSoft : Color(hex: 0x17181B)))
                 }
                 .buttonStyle(.plain)
-                .help("Seçili terminallere aynı anda yaz (⇧⌘B)")
+                .help(L("Seçili terminallere aynı anda yaz (⇧⌘B)", "Type into selected terminals at once (⇧⌘B)"))
 
                 Menu {
-                    Button("Otomatik") { store.setGridColumns(0) }
+                    Button(L("Otomatik", "Automatic")) { store.setGridColumns(0) }
                     ForEach(1...4, id: \.self) { n in
-                        Button("\(n) sütun") { store.setGridColumns(n) }
+                        Button(L("\(n) sütun", "\(n) columns")) { store.setGridColumns(n) }
                     }
                 } label: {
                     Image(systemName: "rectangle.split.3x1")
@@ -65,7 +65,7 @@ struct TerminalArea: View {
                 .menuStyle(.borderlessButton)
                 .menuIndicator(.hidden)
                 .fixedSize()
-                .help("Sütun sayısı")
+                .help(L("Sütun sayısı", "Columns"))
 
                 LayoutSwitch()
             }
@@ -97,13 +97,13 @@ struct LayoutSwitch: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            segment("Izgara", .grid)
-            segment("Odak", .focus)
+            segment(L("Izgara", "Grid"), .grid)
+            segment(L("Odak", "Focus"), .focus)
         }
         .padding(3)
         .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: 0x17181B)))
         .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(Theme.border))
-        .help("Izgara ↔ odak (⌘↩)")
+        .help(L("Izgara ↔ odak (⌘↩)", "Grid ↔ focus (⌘↩)"))
     }
 
     private func segment(_ label: String, _ mode: LayoutMode) -> some View {
@@ -235,12 +235,12 @@ struct EmptyStateView: View {
                 Image(systemName: "terminal")
                     .font(.system(size: 38, weight: .light))
                     .foregroundStyle(Theme.tertiary)
-                Text("Açık terminal yok")
+                Text(L("Açık terminal yok", "No open terminals"))
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.text)
                 Text(project.commands.isEmpty
-                     ? "Yukarıdan komut ekleyin ya da bir ajan/terminal açın."
-                     : "Yukarıdaki komutlardan birini ▶ ile başlatın ya da bir ajan açın.")
+                     ? L("Yukarıdan komut ekleyin ya da bir ajan/terminal açın.", "Add a command above or open an agent or terminal.")
+                     : L("Yukarıdaki komutlardan birini ▶ ile başlatın ya da bir ajan açın.", "Start one of the commands above with ▶ or open an agent."))
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.secondary)
                     .multilineTextAlignment(.center)
@@ -257,13 +257,13 @@ struct EmptyStateView: View {
                 Image(systemName: "square.grid.2x2")
                     .font(.system(size: 38, weight: .light))
                     .foregroundStyle(Theme.tertiary)
-                Text("Çalışan bir şey yok")
+                Text(L("Çalışan bir şey yok", "Nothing running"))
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.text)
-                Text("Panodan bir projeyi başlatın; komutları ve ajanları burada görürsünüz.")
+                Text(L("Panodan bir projeyi başlatın; komutları ve ajanları burada görürsünüz.", "Start a project from the dashboard; its commands and agents show up here."))
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.secondary)
-                Button("Panoya dön") { store.openDashboard() }
+                Button(L("Panoya dön", "Back to dashboard")) { store.openDashboard() }
                     .buttonStyle(GhostButtonStyle(height: 38))
                     .padding(.top, 4)
             }

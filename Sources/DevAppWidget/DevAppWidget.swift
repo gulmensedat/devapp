@@ -1,5 +1,7 @@
 import WidgetKit
 import SwiftUI
+import AppKit
+import AppIntents
 
 // MARK: - Veri
 
@@ -8,6 +10,8 @@ struct DevAppEntry: TimelineEntry {
     let snapshot: WidgetSnapshot
     let isSample: Bool
     var problem: String? = nil
+    /// Projeler widget'ında gösterilen sayfa (oklarla değişir)
+    var page: Int = 0
 }
 
 struct DevAppProvider: TimelineProvider {
@@ -31,9 +35,47 @@ struct DevAppProvider: TimelineProvider {
 
     private func current() -> DevAppEntry {
         if let snap = SharedStore.read() {
-            return DevAppEntry(date: Date(), snapshot: snap, isSample: false)
+            // Widget, uygulamada seçilen dili kullanır
+            LanguageStore.shared.applyResolved(snap.language)
+            return DevAppEntry(date: Date(), snapshot: snap, isSample: false, page: WidgetPager.page)
         }
         return DevAppEntry(date: Date(), snapshot: .empty, isSample: false, problem: SharedStore.readProblem())
+    }
+}
+
+// MARK: - Sayfalama (widget'larda kaydırma yok; oklarla sayfa değiştirilir)
+
+enum WidgetPager {
+    private static let key = "projectsPage"
+    private static var defaults: UserDefaults {
+        SharedStore.groupID.flatMap { UserDefaults(suiteName: $0) } ?? .standard
+    }
+
+    static var page: Int { defaults.integer(forKey: key) }
+
+    static func shift(by delta: Int) {
+        defaults.set(page + delta, forKey: key)
+    }
+
+    /// Kayıtlı sayfa numarasını sayfa sayısına göre sarmalar
+    static func clamp(_ page: Int, count: Int) -> Int {
+        guard count > 0 else { return 0 }
+        return ((page % count) + count) % count
+    }
+}
+
+struct ProjectsPageIntent: AppIntent {
+    static var title: LocalizedStringResource = "Projects page"
+    static var isDiscoverable: Bool = false
+
+    @Parameter(title: "Delta") var delta: Int
+
+    init() { delta = 1 }
+    init(delta: Int) { self.delta = delta }
+
+    func perform() async throws -> some IntentResult {
+        WidgetPager.shift(by: delta)
+        return .result()
     }
 }
 
@@ -54,8 +96,8 @@ struct UsageWidget: Widget {
                 .containerBackground(for: .widget) { W.bg }
                 .widgetURL(URL(string: "devapp://dashboard"))
         }
-        .configurationDisplayName("Claude & Codex Kullanımı")
-        .description("5 saatlik ve haftalık limitler, bugünkü token kullanımı.")
+        .configurationDisplayName(L("Claude & Codex Kullanımı", "Claude & Codex Usage"))
+        .description(L("5 saatlik ve haftalık limitler, bugünkü token kullanımı.", "5-hour and weekly limits, today’s token usage."))
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -67,8 +109,8 @@ struct ProjectsWidget: Widget {
                 .containerBackground(for: .widget) { W.bg }
                 .widgetURL(URL(string: "devapp://dashboard"))
         }
-        .configurationDisplayName("DevApp Projeleri")
-        .description("Çalışan projeler, açık portlar, sizi bekleyen ajanlar ve kullanım.")
+        .configurationDisplayName(L("DevApp Projeleri", "DevApp Projects"))
+        .description(L("Çalışan projeler, açık portlar, sizi bekleyen ajanlar ve kullanım.", "Running projects, open ports, agents waiting for you and usage."))
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
@@ -77,8 +119,9 @@ struct ProjectsWidget: Widget {
 
 enum W {
     static let bg = Color(rgb: 0x0E0F11)
-    static let card = Color(rgb: 0x17181B)
-    static let track = Color(rgb: 0x2A2B30)
+    static let card = Color.white.opacity(0.06)
+    /// Açık renkli yarı saydam iz: hem tam renkli hem "tek renk" (vibrant) masaüstü modunda görünür
+    static let track = Color.white.opacity(0.16)
     static let text = Color(rgb: 0xE9E9EC)
     static let secondary = Color(rgb: 0x9A9DA6)
     static let tertiary = Color(rgb: 0x6F727A)
@@ -92,6 +135,44 @@ enum W {
         if p >= 90 { return red }
         if p >= 70 { return orange }
         return tint
+    }
+}
+
+/// macOS masaüstünde widget'lar arka plandayken "tek renk" (vibrant) çizilir;
+/// o modda koyu renkler kaybolur, bu yüzden dolgular birincil renge çevrilir.
+struct ModeAwareFill: ViewModifier {
+    @Environment(\.widgetRenderingMode) private var mode
+    let color: Color
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(mode == .fullColor ? color : Color.primary)
+    }
+}
+
+extension View {
+    func modeFill(_ color: Color) -> some View { modifier(ModeAwareFill(color: color)) }
+}
+
+/// Son 12 saatin saatlik token grafiği
+struct MiniBars: View {
+    let values: [Int]
+    let tint: Color
+
+    var body: some View {
+        let data = values.isEmpty ? [Int](repeating: 0, count: 12) : values
+        let peak = max(data.max() ?? 0, 1)
+        GeometryReader { geo in
+            HStack(alignment: .bottom, spacing: 2) {
+                ForEach(Array(data.enumerated()), id: \.offset) { i, v in
+                    let h = v == 0 ? 2 : max(3, geo.size.height * CGFloat(v) / CGFloat(peak))
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .modeFill(v == 0 ? W.track : tint.opacity(i == data.count - 1 ? 1 : 0.75))
+                        .frame(height: h)
+                        .widgetAccentable()
+                }
+            }
+            .frame(maxHeight: .infinity, alignment: .bottom)
+        }
     }
 }
 
@@ -121,11 +202,12 @@ struct UsageWidgetView: View {
                 UsageRing(usage: s.codex, label: "Codex", tint: W.codex)
             }
         } else {
-            HStack(spacing: 14) {
+            HStack(alignment: .center, spacing: 14) {
                 ProviderColumn(usage: s.claude, label: "Claude", mark: "C", tint: W.claude)
                 Rectangle().fill(W.track).frame(width: 1)
                 ProviderColumn(usage: s.codex, label: "Codex", mark: "X", tint: W.codex)
             }
+            .frame(maxHeight: .infinity)
         }
     }
 }
@@ -139,28 +221,43 @@ struct UsageRing: View {
     var body: some View {
         let p = usage?.sessionPercent
         VStack(spacing: 6) {
-            ZStack {
-                Circle().stroke(W.track, lineWidth: 7)
-                if let p {
+            if let p {
+                ZStack {
+                    Circle().stroke(W.track, lineWidth: 7)
                     Circle()
-                        .trim(from: 0, to: min(p, 100) / 100)
-                        .stroke(W.level(p, tint: tint), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .trim(from: 0, to: max(0.02, min(p, 100) / 100))
+                        .stroke(style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .modeFill(W.level(p, tint: tint))
                         .rotationEffect(.degrees(-90))
+                        .widgetAccentable()
+                    VStack(spacing: 0) {
+                        Text(verbatim: "\(Int(p.rounded()))")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(W.text)
+                        Text(verbatim: L("5 saat", "5 hours"))
+                            .font(.system(size: 8, weight: .medium))
+                            .foregroundStyle(W.tertiary)
+                    }
                 }
-                VStack(spacing: 0) {
-                    Text(verbatim: p.map { "\(Int($0.rounded()))" } ?? "—")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                .frame(width: 60, height: 60)
+            } else {
+                // Plan yüzdesi yok: bugünkü token + saatlik grafik
+                VStack(spacing: 4) {
+                    Text(verbatim: UsageFormat.tokens(usage?.todayTokens ?? 0))
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(W.text)
-                    Text(verbatim: p == nil ? UsageFormat.tokens(usage?.todayTokens ?? 0) : "5 saat")
-                        .font(.system(size: 8, weight: .medium))
-                        .foregroundStyle(W.tertiary)
+                    MiniBars(values: usage?.hourly ?? [], tint: tint)
+                        .frame(height: 30)
                 }
+                .frame(width: 64, height: 60)
             }
-            .frame(width: 60, height: 60)
-            Text(verbatim: label)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(tint)
-            Text(verbatim: "hafta \(UsageFormat.percent(usage?.weeklyPercent))")
+            HStack(spacing: 4) {
+                AgentBadge(name: label.lowercased(), mark: String(label.prefix(1)), tint: tint, size: 13)
+                Text(verbatim: label)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+            Text(verbatim: L("hafta \(UsageFormat.percent(usage?.weeklyPercent))", "week \(UsageFormat.percent(usage?.weeklyPercent))"))
                 .font(.system(size: 9.5, design: .monospaced))
                 .foregroundStyle(W.secondary)
         }
@@ -173,30 +270,28 @@ struct ProviderColumn: View {
     let label: String
     let mark: String
     let tint: Color
+    /// Projeler widget'ının altında: grafik ve not yok, aralıklar dar
+    var compact = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: compact ? 6 : 8) {
             HStack(spacing: 7) {
-                Text(verbatim: mark)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(tint)
-                    .frame(width: 20, height: 20)
-                    .background(RoundedRectangle(cornerRadius: 5).fill(tint.opacity(0.18)))
+                AgentBadge(name: label.lowercased(), mark: mark, tint: tint, size: 20)
                 Text(verbatim: label)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: compact ? 12 : 13, weight: .semibold))
                     .foregroundStyle(W.text)
+                    .lineLimit(1)
                 Spacer(minLength: 2)
                 Text(verbatim: UsageFormat.tokens(usage?.todayTokens ?? 0))
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
                     .foregroundStyle(W.secondary)
+                    .fixedSize()
             }
-            WidgetBar(title: "5 saat", percent: usage?.sessionPercent, resetsAt: usage?.sessionResetsAt, tint: tint)
-            WidgetBar(title: "Hafta", percent: usage?.weeklyPercent, resetsAt: usage?.weeklyResetsAt, tint: tint)
-            if usage?.sessionPercent == nil, let note = usage?.note {
-                Text(verbatim: note)
-                    .font(.system(size: 9))
-                    .foregroundStyle(W.tertiary)
-                    .lineLimit(1)
+            WidgetBar(title: L("5 saat", "5 hours"), percent: usage?.sessionPercent, resetsAt: usage?.sessionResetsAt, tint: tint)
+            WidgetBar(title: L("Hafta", "Week"), percent: usage?.weeklyPercent, resetsAt: usage?.weeklyResetsAt, tint: tint)
+            if !compact {
+                MiniBars(values: usage?.hourly ?? [], tint: tint)
+                    .frame(height: 16)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -215,16 +310,18 @@ struct WidgetBar: View {
                 Text(verbatim: title)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(W.secondary)
+                    .lineLimit(1)
                 Spacer(minLength: 2)
                 Text(verbatim: UsageFormat.percent(percent))
                     .font(.system(size: 10, weight: .semibold, design: .monospaced))
                     .foregroundStyle(percent.map { W.level($0, tint: tint) } ?? W.tertiary)
-                if let resetsAt, resetsAt > Date() {
-                    Text(resetsAt, style: .relative)
+                    .fixedSize()
+                if let reset = UsageFormat.resetIn(resetsAt) {
+                    Text(verbatim: "· " + reset)
                         .font(.system(size: 9, design: .monospaced))
                         .foregroundStyle(W.tertiary)
                         .lineLimit(1)
-                        .frame(maxWidth: 58, alignment: .trailing)
+                        .fixedSize()
                 }
             }
             GeometryReader { geo in
@@ -232,12 +329,37 @@ struct WidgetBar: View {
                     Capsule().fill(W.track)
                     if let percent {
                         Capsule()
-                            .fill(W.level(percent, tint: tint))
+                            .modeFill(W.level(percent, tint: tint))
                             .frame(width: max(3, geo.size.width * min(percent, 100) / 100))
+                            .widgetAccentable()
                     }
                 }
             }
             .frame(height: 5)
+        }
+    }
+}
+
+/// Claude / Codex logosu: uygulamanın App Group'a yazdığı ikon, yoksa harf
+struct AgentBadge: View {
+    let name: String
+    let mark: String
+    let tint: Color
+    var size: CGFloat = 20
+
+    var body: some View {
+        if let url = SharedStore.agentIconURL(name), let image = NSImage(contentsOf: url) {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+        } else {
+            Text(verbatim: mark)
+                .font(.system(size: size * 0.5, weight: .bold))
+                .foregroundStyle(tint)
+                .frame(width: size, height: size)
+                .background(RoundedRectangle(cornerRadius: size * 0.25).fill(tint.opacity(0.18)))
         }
     }
 }
@@ -248,65 +370,100 @@ struct ProjectsWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: DevAppEntry
 
+    private static let rowHeight: CGFloat = 30
+    private static let rowSpacing: CGFloat = 4
+    private static let headerHeight: CGFloat = 20
+    /// Büyük boyutta alttaki kullanım bölümünün yüksekliği (çizgi + iki sütun)
+    private static let usageHeight: CGFloat = 86
+
     var body: some View {
+        // Satır sayısı widget'ın gerçek yüksekliğinden hesaplanır; böylece hiçbir boyutta kesilmez
+        GeometryReader { geo in
+            content(height: geo.size.height)
+        }
+    }
+
+    private func rowsPerPage(height: CGFloat) -> Int {
+        var avail = height - Self.headerHeight - 6
+        if family == .systemLarge { avail -= Self.usageHeight + 8 }
+        return max(1, Int((avail + Self.rowSpacing) / (Self.rowHeight + Self.rowSpacing)))
+    }
+
+    @ViewBuilder
+    private func content(height: CGFloat) -> some View {
         let s = entry.snapshot
         let ordered = s.projects.sorted { rank($0.state) < rank($1.state) }
-        let limit = family == .systemLarge ? 6 : 3
+        let rows = rowsPerPage(height: height)
+        let pageCount = max(1, (ordered.count + rows - 1) / rows)
+        let page = WidgetPager.clamp(entry.page, count: pageCount)
+        let visible = Array(ordered.dropFirst(page * rows).prefix(rows))
 
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Text("DevApp")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(W.text)
-                let running = s.projects.filter { $0.state == "running" || $0.state == "attention" }.count
-                Text(verbatim: "· \(running) çalışıyor")
-                    .font(.system(size: 11))
-                    .foregroundStyle(W.secondary)
-                Spacer()
-                if s.attention > 0 {
-                    Link(destination: URL(string: "devapp://attention")!) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "bell.fill").font(.system(size: 9))
-                            Text(verbatim: "\(s.attention)").font(.system(size: 11, weight: .bold))
-                        }
-                        .foregroundStyle(Color(rgb: 0x1A1206))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(W.orange))
-                    }
-                }
-            }
+        VStack(alignment: .leading, spacing: 6) {
+            header(s, page: page, pageCount: pageCount)
 
             if ordered.isEmpty {
-                Spacer()
-                Text(verbatim: entry.isSample ? "" : (entry.problem ?? "DevApp'i açıp bir proje ekleyin"))
+                Spacer(minLength: 0)
+                Text(verbatim: entry.isSample ? "" : (entry.problem ?? L("DevApp'i açıp bir proje ekleyin", "Open DevApp and add a project")))
                     .font(.system(size: 11))
                     .foregroundStyle(W.secondary)
-                Spacer()
+                    .frame(maxWidth: .infinity)
+                Spacer(minLength: 0)
             } else {
-                VStack(spacing: 5) {
-                    ForEach(ordered.prefix(limit)) { p in
+                VStack(spacing: Self.rowSpacing) {
+                    ForEach(visible) { p in
                         Link(destination: URL(string: "devapp://project/\(p.id.uuidString)")!) {
-                            ProjectRowView(project: p)
+                            ProjectRowView(project: p, maxPorts: family == .systemLarge ? 2 : 1)
                         }
                     }
-                }
-                if ordered.count > limit {
-                    Text(verbatim: "+\(ordered.count - limit) proje")
-                        .font(.system(size: 10))
-                        .foregroundStyle(W.tertiary)
                 }
                 Spacer(minLength: 0)
             }
 
             if family == .systemLarge {
-                Rectangle().fill(W.track).frame(height: 1)
-                HStack(spacing: 14) {
-                    ProviderColumn(usage: s.claude, label: "Claude", mark: "C", tint: W.claude)
-                    ProviderColumn(usage: s.codex, label: "Codex", mark: "X", tint: W.codex)
+                VStack(spacing: 8) {
+                    Rectangle().fill(W.track).frame(height: 1)
+                    HStack(alignment: .top, spacing: 14) {
+                        ProviderColumn(usage: s.claude, label: "Claude", mark: "C", tint: W.claude, compact: true)
+                        ProviderColumn(usage: s.codex, label: "Codex", mark: "X", tint: W.codex, compact: true)
+                    }
                 }
+                .frame(height: Self.usageHeight, alignment: .top)
             }
         }
+        .frame(width: nil, height: height, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func header(_ s: WidgetSnapshot, page: Int, pageCount: Int) -> some View {
+        HStack(spacing: 6) {
+            Text(verbatim: "DevApp")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(W.text)
+                .fixedSize()
+            let running = s.projects.filter { $0.state == "running" || $0.state == "attention" }.count
+            Text(verbatim: L("· \(running) çalışıyor", "· \(running) running"))
+                .font(.system(size: 11))
+                .foregroundStyle(W.secondary)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            if s.attention > 0 {
+                Link(destination: URL(string: "devapp://attention")!) {
+                    HStack(spacing: 3) {
+                        Image(systemName: "bell.fill").font(.system(size: 9))
+                        Text(verbatim: "\(s.attention)").font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(Color(rgb: 0x1A1206))
+                    .padding(.horizontal, 7)
+                    .frame(height: 18)
+                    .background(Capsule().fill(W.orange))
+                    .fixedSize()
+                }
+            }
+            if pageCount > 1 {
+                PagerControl(page: page, pageCount: pageCount)
+            }
+        }
+        .frame(height: Self.headerHeight)
     }
 
     private func rank(_ state: String) -> Int {
@@ -319,19 +476,63 @@ struct ProjectsWidgetView: View {
     }
 }
 
+/// ‹ 1/3 › — widget'ta kaydırma olmadığı için sayfalar arasında geçiş
+struct PagerControl: View {
+    let page: Int
+    let pageCount: Int
+
+    var body: some View {
+        HStack(spacing: 2) {
+            Button(intent: ProjectsPageIntent(delta: -1)) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 18, height: 18)
+                    .background(Circle().fill(W.card))
+            }
+            .buttonStyle(.plain)
+            Text(verbatim: "\(page + 1)/\(pageCount)")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(W.secondary)
+                .fixedSize()
+            Button(intent: ProjectsPageIntent(delta: 1)) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .bold))
+                    .frame(width: 18, height: 18)
+                    .background(Circle().fill(W.card))
+            }
+            .buttonStyle(.plain)
+        }
+        .foregroundStyle(W.text)
+        .fixedSize()
+    }
+}
+
 struct ProjectRowView: View {
     let project: ProjectSnapshot
+    var maxPorts = 2
 
     var body: some View {
         HStack(spacing: 8) {
+            if project.hasIcon == true, let url = SharedStore.iconURL(for: project.id),
+               let image = NSImage(contentsOf: url) {
+                Image(nsImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    .opacity(project.state == "idle" ? 0.6 : 1)
+            } else {
             Text(verbatim: project.initials)
                 .font(.system(size: 10, weight: .bold))
                 .foregroundStyle(Color(rgb: 0x0B0C10))
                 .frame(width: 24, height: 24)
-                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Color(rgb: project.colorHex)))
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).modeFill(Color(rgb: project.colorHex)))
                 .opacity(project.state == "idle" ? 0.55 : 1)
+            }
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: project.name)
+                    .truncationMode(.tail)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(W.text)
                     .lineLimit(1)
@@ -340,19 +541,21 @@ struct ProjectRowView: View {
                     .foregroundStyle(W.secondary)
                     .lineLimit(1)
             }
+            .layoutPriority(1)
             Spacer(minLength: 4)
-            ForEach(project.ports.prefix(2), id: \.self) { port in
+            ForEach(project.ports.prefix(maxPorts), id: \.self) { port in
                 Text(verbatim: ":\(port)")
                     .font(.system(size: 9.5, weight: .medium, design: .monospaced))
                     .foregroundStyle(W.green)
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
                     .background(RoundedRectangle(cornerRadius: 4).fill(W.green.opacity(0.15)))
+                    .fixedSize()
             }
             Circle().fill(dot).frame(width: 7, height: 7)
         }
         .padding(.horizontal, 7)
-        .padding(.vertical, 4)
+        .frame(height: 30)
         .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(W.card))
     }
 
@@ -368,14 +571,14 @@ struct ProjectRowView: View {
     private var detail: String {
         var parts: [String] = []
         switch project.state {
-        case "attention": parts.append("sizi bekliyor")
-        case "crashed": parts.append("hata")
-        case "idle": parts.append("durdu")
+        case "attention": parts.append(L("sizi bekliyor", "waiting for you"))
+        case "crashed": parts.append(L("hata", "error"))
+        case "idle": parts.append(L("durdu", "stopped"))
         default: break
         }
-        if project.runningCommands > 0 { parts.append("\(project.runningCommands) komut") }
-        if project.agents > 0 { parts.append("\(project.agents) ajan") }
-        return parts.isEmpty ? "çalışıyor" : parts.joined(separator: " · ")
+        if project.runningCommands > 0 { parts.append(L("\(project.runningCommands) komut", "\(project.runningCommands) commands")) }
+        if project.agents > 0 { parts.append(L("\(project.agents) ajan", "\(project.agents) agents")) }
+        return parts.isEmpty ? L("çalışıyor", "running") : parts.joined(separator: " · ")
     }
 }
 
@@ -387,10 +590,10 @@ struct NoDataView: View {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 20))
                 .foregroundStyle(W.tertiary)
-            Text("DevApp'i açın")
+            Text(L("DevApp'i açın", "Open DevApp"))
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(W.text)
-            Text(verbatim: problem ?? "Kullanım verisi uygulama açıkken güncellenir")
+            Text(verbatim: problem ?? L("Kullanım verisi uygulama açıkken güncellenir", "Usage data updates while DevApp is open"))
                 .font(.system(size: 10))
                 .foregroundStyle(W.secondary)
                 .multilineTextAlignment(.center)
@@ -412,14 +615,18 @@ extension WidgetSnapshot {
                                 state: "running", runningCommands: 1, agents: 0, ports: []),
                 ProjectSnapshot(id: UUID(), name: "mobil-app", initials: "MA", colorHex: 0x43D9B8,
                                 state: "idle", runningCommands: 0, agents: 0, ports: []),
+                ProjectSnapshot(id: UUID(), name: "api-gateway", initials: "AG", colorHex: 0xF5D76E,
+                                state: "idle", runningCommands: 0, agents: 0, ports: []),
             ],
             attention: 1,
             claude: ProviderUsage(name: "Claude", sessionPercent: 42, sessionResetsAt: now.addingTimeInterval(7_800),
                                   weeklyPercent: 18, weeklyResetsAt: now.addingTimeInterval(300_000),
-                                  todayTokens: 1_840_000, windowTokens: 620_000, lastActivity: now),
+                                  todayTokens: 1_840_000, windowTokens: 620_000, lastActivity: now,
+                                  hourly: [0, 40, 120, 80, 0, 0, 30, 200, 260, 140, 90, 180].map { $0 * 1000 }),
             codex: ProviderUsage(name: "Codex", sessionPercent: 12, sessionResetsAt: now.addingTimeInterval(14_000),
                                  weeklyPercent: 31, weeklyResetsAt: now.addingTimeInterval(410_000),
-                                 todayTokens: 920_000, windowTokens: 310_000, lastActivity: now)
+                                 todayTokens: 920_000, windowTokens: 310_000, lastActivity: now,
+                                 hourly: [10, 0, 0, 60, 90, 40, 0, 0, 70, 110, 30, 50].map { $0 * 1000 })
         )
     }
 }

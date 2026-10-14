@@ -83,53 +83,53 @@ struct AppCommands: Commands {
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
-            Button("Yeni Terminal") { store.quickNew(.shell) }
+            Button(L("Yeni Terminal", "New Terminal")) { store.quickNew(.shell) }
                 .keyboardShortcut("t", modifiers: .command)
-            Button("Yeni Claude Oturumu") { store.quickNew(.claude) }
+            Button(L("Yeni Claude Oturumu", "New Claude Session")) { store.quickNew(.claude) }
                 .keyboardShortcut("c", modifiers: [.command, .shift])
-            Button("Yeni Codex Oturumu") { store.quickNew(.codex) }
+            Button(L("Yeni Codex Oturumu", "New Codex Session")) { store.quickNew(.codex) }
                 .keyboardShortcut("k", modifiers: [.command, .shift])
-            Button("Yeni Oturum (Gelişmiş)…") { store.requestNewSession(kind: .claude) }
+            Button(L("Yeni Oturum (Gelişmiş)…", "New Session (Advanced)…")) { store.requestNewSession(kind: .claude) }
                 .keyboardShortcut("n", modifiers: .command)
             Divider()
-            Button("Proje Ekle…") { store.addProjectsViaPanel() }
+            Button(L("Proje Ekle…", "Add Project…")) { store.addProjectsViaPanel() }
                 .keyboardShortcut("o", modifiers: .command)
         }
 
-        CommandMenu("Proje") {
-            Button("Projeyi Başlat") { if let p = store.currentProject { store.startProject(p) } }
+        CommandMenu(L("Proje", "Project")) {
+            Button(L("Projeyi Başlat", "Start Project")) { if let p = store.currentProject { store.startProject(p) } }
                 .keyboardShortcut("r", modifiers: [.command, .option])
-            Button("Projeyi Durdur") { if let p = store.currentProject { store.stopProject(p) } }
+            Button(L("Projeyi Durdur", "Stop Project")) { if let p = store.currentProject { store.stopProject(p) } }
                 .keyboardShortcut(".", modifiers: [.command, .option])
-            Button("Komutları Düzenle…") { if let p = store.currentProject { store.editCommands(p) } }
+            Button(L("Komutları Düzenle…", "Edit Commands…")) { if let p = store.currentProject { store.editCommands(p) } }
                 .keyboardShortcut("e", modifiers: [.command, .option])
         }
 
         CommandGroup(after: .sidebar) {
-            Button("Pano") { store.openDashboard() }
+            Button(L("Pano", "Dashboard")) { store.openDashboard() }
                 .keyboardShortcut("0", modifiers: .command)
-            Button("Tüm Terminaller") { store.openTerminals() }
+            Button(L("Tüm Terminaller", "All Terminals")) { store.openTerminals() }
                 .keyboardShortcut("0", modifiers: [.command, .shift])
             Divider()
         }
 
-        CommandMenu("Terminaller") {
-            Button("Izgara / Odak Modu") { store.toggleLayout() }
+        CommandMenu(L("Terminaller", "Terminals")) {
+            Button(L("Izgara / Odak Modu", "Grid / Focus Mode")) { store.toggleLayout() }
                 .keyboardShortcut(.return, modifiers: .command)
-            Button("Sonraki Terminal") { store.focusNext(1) }
+            Button(L("Sonraki Terminal", "Next Terminal")) { store.focusNext(1) }
                 .keyboardShortcut(.tab, modifiers: .control)
-            Button("Önceki Terminal") { store.focusNext(-1) }
+            Button(L("Önceki Terminal", "Previous Terminal")) { store.focusNext(-1) }
                 .keyboardShortcut(.tab, modifiers: [.control, .shift])
-            Button("Dikkat Bekleyene Git") { store.focusNextAttention() }
+            Button(L("Dikkat Bekleyene Git", "Go to Waiting Session")) { store.focusNextAttention() }
                 .keyboardShortcut("j", modifiers: .command)
             Divider()
-            Button("Yeniden Başlat") { if let s = store.focusedSession { store.restart(s) } }
+            Button(L("Yeniden Başlat", "Restart")) { if let s = store.focusedSession { store.restart(s) } }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
-            Button("Yeniden Adlandır…") { if let s = store.focusedSession { store.rename(s) } }
-            Button("Terminali Kapat") { if let s = store.focusedSession { store.close(s) } }
+            Button(L("Yeniden Adlandır…", "Rename…")) { if let s = store.focusedSession { store.rename(s) } }
+            Button(L("Terminali Kapat", "Close Terminal")) { if let s = store.focusedSession { store.close(s) } }
                 .keyboardShortcut("w", modifiers: [.command, .shift])
             Divider()
-            Button("Toplu Gönderim Çubuğu") { store.showBroadcast.toggle() }
+            Button(L("Toplu Gönderim Çubuğu", "Broadcast Bar")) { store.showBroadcast.toggle() }
                 .keyboardShortcut("b", modifiers: [.command, .shift])
             Divider()
             ForEach(1...9, id: \.self) { n in
@@ -138,16 +138,16 @@ struct AppCommands: Commands {
             }
         }
 
-        CommandMenu("Aç") {
-            Button("Xcode'da Aç") { store.openInXcode() }
+        CommandMenu(L("Aç", "Open")) {
+            Button(L("Xcode'da Aç", "Open in Xcode")) { store.openInXcode() }
                 .keyboardShortcut("x", modifiers: [.command, .shift])
-            Button("Finder'da Göster") { store.revealInFinder() }
+            Button(L("Finder'da Göster", "Show in Finder")) { store.revealInFinder() }
                 .keyboardShortcut("f", modifiers: [.command, .shift])
-            Button("Harici Terminalde Aç") { store.openInExternalTerminal() }
+            Button(L("Harici Terminalde Aç", "Open in External Terminal")) { store.openInExternalTerminal() }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
             Divider()
             ForEach(Launcher.installedEditors.filter { $0.id != Launcher.xcode.id }) { app in
-                Button("\(app.name) ile Aç") { store.open(with: app) }
+                Button(L("\(app.name) ile Aç", "Open with \(app.name)")) { store.open(with: app) }
             }
         }
     }
