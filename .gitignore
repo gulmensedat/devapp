@@ -10,3 +10,6 @@ xcuserdata/
 DevApp.xcodeproj/
 Support/Generated/
 .devapp-team
+
+# Claude uygulamasının sohbetten indirdiği dosyalar
+Claude outputs/
